@@ -1,0 +1,4 @@
+build/
+example/hello.bc
+hello.riscrel
+hello.riscvrel
