@@ -11,21 +11,16 @@ cd "$BUILD_DIR"
 
 cmake -G Ninja \
 	-DCMAKE_BUILD_TYPE=Debug        \
-	-DBUILD_SHARED_LIBS=On          \
-	-DLLVM_BUILD_TOOLS=On           \
-	-DLLVM_BUILD_TESTS=Off          \
-	-DLLVM_BUILD_DOCS=Off           \
-	-DLLVM_ENABLE_LTO=Off           \
-	-DLLVM_ENABLE_DOXYGEN=Off       \
-	-DLLVM_ENABLE_RTTI=Off          \
-	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;compiler-rt;libc;libclc;lld;lldb;mlir"      \
-  	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
-	-DCMAKE_INSTALL_PREFIX="../_install" \
-	-DGCC_INSTALL_PREFIX="/opt/riscv" \
+	-DBUILD_SHARED_LIBS=True          \
+	-DLLVM_BUILD_TOOLS=True           \
+	-DLLVM_BUILD_TESTS=False          \
+	-DLLVM_BUILD_DOCS=False           \
+	-DLLVM_ENABLE_LTO=False           \
+	-DLLVM_ENABLE_DOXYGEN=False       \
+	-DLLVM_ENABLE_RTTI=False          \
+	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc;libclc;lld;lldb;mlir"      \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
-  	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
-    -DCMAKE_CXX_COMPILER=clang++    \
-    -DCMAKE_C_COMPILER=clang        \
+    -DLLVM_DEFAULT_TARGET_TRIPLE="riscv64-linux-gnu" \
 	"$SCRIPT_ROOT/llvm-project/llvm"
 ninja
 
