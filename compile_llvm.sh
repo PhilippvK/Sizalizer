@@ -19,7 +19,7 @@ cmake -G Ninja \
 	-DCMAKE_C_Compiler=/usr/bin/clang++ \
 	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc;libclc;lld;lldb;mlir"      \
 	-DLLVM_ENABLE_RUNTIMES=all \
-	-DLLVM_TARGETS_TO_BUILD="RISCV" \
+	-DLLVM_TARGETS_TO_BUILD="RISCV;X86;WebAssembly" \
 	-DLLVM_TARGET_ARCH="RISCV"		\
 	-DLLVM_USE_LINKER=/usr/bin/lld 	\
 	-DBUILD_SHARED_LIBS=OFF         \
