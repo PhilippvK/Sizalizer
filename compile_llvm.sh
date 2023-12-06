@@ -19,11 +19,10 @@ cmake -G Ninja \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
 	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
 	-DGCC_INSTALL_PREFIX="/opt/riscv" \
-	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc;libclc;lld;lldb;mlir"      \
+	-DLLVM_ENABLE_PROJECTS="clang;libc;lld"      \
 	-DLLVM_ENABLE_RUNTIMES=all \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32imc-unknown-elf" \
-	-DLLVM_BUILD_32_BITS=ON			\
 	-DLLVM_BUILD_DOCS=OFF           \
 	-DLLVM_BUILD_TOOLS=ON           \
 	-DLLVM_BUILD_TESTS=OFF          \
