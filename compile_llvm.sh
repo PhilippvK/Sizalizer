@@ -10,16 +10,16 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 cmake -G Ninja \
-	-DLLVM_PARALLEL_LINK_JOBS=2 \
-	-DLLVM_PARALLEL_COMPILE_JOBS=6 \
-	-DLLVM_RAM_PER_COMPILE_JOB=3333 \
-	-DLLVM_RAM_PER_LINK_JOB=10000	\
+	-DLLVM_PARALLEL_LINK_JOBS=1 \
+	-DLLVM_PARALLEL_COMPILE_JOBS=2 \
+	-DLLVM_RAM_PER_COMPILE_JOB=10000 \
+	-DLLVM_RAM_PER_LINK_JOB=20000	\
 	-DCMAKE_BUILD_TYPE=Debug        \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
 	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
 	-DGCC_INSTALL_PREFIX="/opt/riscv" \
-	-DLLVM_ENABLE_PROJECTS="clang;libc;lld"      \
+	-DLLVM_ENABLE_PROJECTS="clang;libc;lld;mlir"      \
 	-DLLVM_ENABLE_RUNTIMES=all \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32imc-unknown-elf" \
