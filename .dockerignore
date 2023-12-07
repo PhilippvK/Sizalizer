@@ -1,0 +1,11 @@
+riscv-gnu-toolchain/
+llvm-project/build/
+embench-iot/log/
+embench-iot/build/
+*.ll
+*.bc
+*.riscrel
+*.riscvrel
+*.out
+*.md
+.git
