@@ -10,7 +10,7 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 # clang++: error: -gsplit-dwarf is unsupported with RISC-V linker relaxation (-mrelax)
-cmake -G cmake \
+cmake -G Ninja \
 	-DLLVM_PARALLEL_LINK_JOBS=2 \
 	-DLLVM_PARALLEL_COMPILE_JOBS=4 \
 	-DLLVM_RAM_PER_COMPILE_JOB=7500 \
