@@ -12,8 +12,8 @@ cd "$BUILD_DIR"
 # clang++: error: -gsplit-dwarf is unsupported with RISC-V linker relaxation (-mrelax)
 cmake -G Ninja \
 	-DLLVM_PARALLEL_LINK_JOBS=2 \
-	-DLLVM_PARALLEL_COMPILE_JOBS=4 \
-	-DLLVM_RAM_PER_COMPILE_JOB=7500 \
+	-DLLVM_PARALLEL_COMPILE_JOBS=2 \
+	-DLLVM_RAM_PER_COMPILE_JOB=10000 \
 	-DLLVM_RAM_PER_LINK_JOB=15000	\
 	-DCMAKE_BUILD_TYPE=RelWithDebInfo        \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
