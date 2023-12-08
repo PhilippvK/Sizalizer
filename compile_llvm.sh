@@ -24,7 +24,7 @@ cmake -G cmake \
 	-DLLVM_TARGET_ARCH="RISCV" \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
-	-DLLVM_ENABLE_RUNTIMES="libc;libcxx;libcxxabi" \
+	-DLLVM_ENABLE_RUNTIMES=all \
 	-DLLVM_BUILD_DOCS=OFF           \
 	-DLLVM_BUILD_TOOLS=ON           \
 	-DLLVM_BUILD_TESTS=ON          \
