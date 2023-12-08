@@ -2,27 +2,27 @@
 
 set -ue
 
-SCRIPT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BUILD_DIR="${SCRIPT_ROOT}/llvm-project/build"
-
+# SCRIPT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# BUILD_DIR="${SCRIPT_ROOT}/llvm-project/build"
+BUILD_DIR=/llvm-project/build
 
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 cmake -G Ninja \
 	-DLLVM_PARALLEL_LINK_JOBS=1 \
-	-DLLVM_PARALLEL_COMPILE_JOBS=2 \
-	-DLLVM_RAM_PER_COMPILE_JOB=10000 \
+	-DLLVM_PARALLEL_COMPILE_JOBS=4 \
+	-DLLVM_RAM_PER_COMPILE_JOB=7500 \
 	-DLLVM_RAM_PER_LINK_JOB=20000	\
 	-DCMAKE_BUILD_TYPE=Debug        \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
 	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
 	-DGCC_INSTALL_PREFIX="/opt/riscv" \
-	-DLLVM_ENABLE_PROJECTS="clang;libc;lld;mlir"      \
+	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc;libclc;lld;lldb;mlir"      \
 	-DLLVM_ENABLE_RUNTIMES=all \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
-	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32imc-unknown-elf" \
+	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32gc-unknown-elf" \
 	-DLLVM_BUILD_DOCS=OFF           \
 	-DLLVM_BUILD_TOOLS=ON           \
 	-DLLVM_BUILD_TESTS=OFF          \
@@ -37,8 +37,8 @@ cmake -G Ninja \
 	-DLLVM_STATIC_LINK_CXX_STDLIB=OFF	\
     -DLLVM_ENABLE_LIBCXX=OFF 		\
 	-DLLVM_ENABLE_LLVM_LIBC=OFF		\
-	"$SCRIPT_ROOT/llvm-project/llvm"
+	"/llvm-project/llvm"
 cmake --build .
 cmake --build . --target install
 
-cd "$SCRIPT_ROOT"
+cd "/"

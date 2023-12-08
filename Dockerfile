@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 LABEL version="1.0"
-LABEL description="Image for DAG analysis"
+LABEL description="SEAL Image"
 # apt prompts
 RUN apt-get update
 RUN apt-get upgrade -y
@@ -59,23 +59,21 @@ RUN apt-get install -y fish \
                     libexpat-dev \
                     libglib2.0-dev
 
-RUN rm -rf /var/lib/apt/lists/*
-RUN apt-get clean
-
 
 #####################################
 #### Copy folders of the context ####
 #####################################
 WORKDIR /
-    # Compile clang, clang++, ...
-    COPY . seal
+    COPY compile_llvm.sh /
+    COPY compile_embench_iot.sh /
+    COPY llvm-project /llvm-project
     
 
 #########################################
 #### Clone & Build RISCV32 Toolchain ####
 #########################################
 #     RUN wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-# WORKDIR /seal
+# WORKDIR /
 #     RUN git clone https://github.com/riscv-collab/riscv-gnu-toolchain
 
 # WORKDIR /riscv-gnu-toolchain
@@ -100,11 +98,11 @@ WORKDIR /
 #     RUN make build-llvm
 #     RUN make clean
 
-###############################
-#### Clone riscv Toolchain ####
-###############################
-WORKDIR /seal
-    RUN wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
+##################################
+#### Download riscv Toolchain ####
+##################################
+WORKDIR /
+    RUN wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
     RUN tar xf riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
     RUN rm riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
     RUN mv riscv /opt
@@ -112,10 +110,10 @@ WORKDIR /seal
 ###########################################
 #### Build Clang, Passes and set paths ####
 ###########################################
-# WORKDIR /seal/llvm-project
-#     RUN ./compile_llvm.sh
+WORKDIR /
+    RUN ./compile_llvm.sh
 
-# WORKDIR /seal/llvm-project
+# WORKDIR /llvm-project
     # Set Path to compilde clang, clang++, ...
 #     ARG BUILD_PATH="/llvm-project/build"
 #     ARG BUILD_BIN="$BUILD_PATH/bin"
@@ -126,7 +124,7 @@ WORKDIR /seal
 
 #     ARG LOAD_FLAGS="-Xclang -load -Xclang"
 
-WORKDIR /seal
+WORKDIR /
 #    RUN export ASAN_SYMBOLIZER=$BUILD_BIN/llvm-symbolizer
 #     RUN export ASAN_OPTIONS=detect_leaks=0
 
