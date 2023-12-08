@@ -22,7 +22,7 @@ cmake -G Ninja \
 	-DLLVM_ENABLE_PROJECTS="clang;clang-tools-extra;libc;libclc;lld;lldb;mlir"      \
 	-DLLVM_ENABLE_RUNTIMES=all \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
-	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32gc-unknown-elf" \
+	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
 	-DLLVM_BUILD_DOCS=OFF           \
 	-DLLVM_BUILD_TOOLS=ON           \
 	-DLLVM_BUILD_TESTS=OFF          \
