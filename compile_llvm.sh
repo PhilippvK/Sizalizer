@@ -24,7 +24,7 @@ cmake -G Ninja \
 	-DLLVM_TARGET_ARCH="riscv32gc" \
 	-DLLVM_TARGETS_TO_BUILD="RISCV" \
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
-	-DLLVM_ENABLE_RUNTIMES=all \
+	-DLLVM_ENABLE_RUNTIMES="compiler-rt;libc;libcxx;libcxxabi" \
 	-DLLVM_BUILD_DOCS=OFF           \
 	-DLLVM_BUILD_TOOLS=ON           \
 	-DLLVM_BUILD_TESTS=ON          \
