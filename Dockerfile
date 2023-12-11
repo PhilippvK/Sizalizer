@@ -67,45 +67,14 @@ WORKDIR /
     COPY compile_llvm.sh /
     COPY compile_embench_iot.sh /
     COPY llvm-project /llvm-project
-    
-
-#########################################
-#### Clone & Build RISCV32 Toolchain ####
-#########################################
-#     RUN wget https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-# WORKDIR /
-#     RUN git clone https://github.com/riscv-collab/riscv-gnu-toolchain
-
-# WORKDIR /riscv-gnu-toolchain
-#     RUN ./configure --prefix=/opt/riscv --with-arch=rv32gc --with-abi=ilp32d --enable-gdb
-#     RUN make
-#     RUN make clean
-#     RUN make linux
-#     RUN make clean
-#     # Build qemu
-#     RUN make build-qemu
-#     RUN make clean
-#     RUN make build-binutils
-#     RUN make clean
-#     RUN make build-gdb
-#     RUN make clean
-#     RUN make build-gcc1 
-#     RUN make clean
-#     RUN make build-libc
-#     RUN make clean
-#     RUN make build-gcc2
-#     RUN make clean
-#     RUN make build-llvm
-#     RUN make clean
 
 ##################################
 #### Download riscv Toolchain ####
 ##################################
-WORKDIR /
-    RUN wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-    RUN tar xf riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-    RUN rm riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-    RUN mv riscv /opt
+WORKDIR /opt
+    RUN wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
+        && tar xf riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
+        && rm riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
 
 ###########################################
 #### Build Clang, Passes and set paths ####
