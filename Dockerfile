@@ -65,7 +65,10 @@ RUN apt-get install -y fish \
 #####################################
 WORKDIR /
     COPY compile_llvm.sh /
+    COPY llvm-project /llvm-project
+
     COPY compile_embench_iot.sh /
+    COPY embench-iot /embench-iot
 
 ##################################
 #### Download riscv Toolchain ####

@@ -1,6 +1,0 @@
-services:
-  seal:
-    build: .
-    volumes:
-      - ./llvm-project:/llvm-project
-      - ./embench-iot:/embench-iot
