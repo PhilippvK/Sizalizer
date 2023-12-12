@@ -15,12 +15,12 @@ cmake -G Ninja \
 	-DLLVM_PARALLEL_COMPILE_JOBS=4 		\
 	-DLLVM_RAM_PER_COMPILE_JOB=5000 	\
 	-DLLVM_RAM_PER_LINK_JOB=15000		\
-	-DCMAKE_BUILD_TYPE=Release   \
+	-DCMAKE_BUILD_TYPE=MinRelSize   \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
 	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
 	-DGCC_INSTALL_PREFIX="/opt/riscv" 	\
-	-DLLVM_ENABLE_PROJECTS="clang;mlir"      \
+	-DLLVM_ENABLE_PROJECTS="clang;libc;ldd;mlir"      \
 	-DLLVM_TARGET_ARCH="riscv32gc"  	\
 	-DLLVM_TARGETS_TO_BUILD="RISCV" 	\
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
