@@ -15,7 +15,7 @@ cmake -G Ninja \
 	-DLLVM_PARALLEL_COMPILE_JOBS=4 		\
 	-DLLVM_RAM_PER_COMPILE_JOB=5000 	\
 	-DLLVM_RAM_PER_LINK_JOB=15000		\
-	-DCMAKE_BUILD_TYPE=RelWithDebInfo   \
+	-DCMAKE_BUILD_TYPE=Release   \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
 	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
@@ -24,14 +24,14 @@ cmake -G Ninja \
 	-DLLVM_TARGET_ARCH="riscv32gc"  	\
 	-DLLVM_TARGETS_TO_BUILD="RISCV" 	\
 	-DLLVM_DEFAULT_TARGET_TRIPLE="riscv32-unknown-elf" \
-	-DLLVM_ENABLE_WARNINGS=OFF			\
+	-DLLVM_ENABLE_WARNINGS=ON			\
 	-DLLVM_ENABLE_WERROR=OFF			\
 	-DLLVM_USE_SPLIT_DWARF=OFF			\
 	-DLLVM_OPTIMIZED_TABLEGEN=ON		\
 	"/llvm-project/llvm"
 
 cmake --build .
-# cmake --build . --target install
+cmake --build . --target install
 
 #make check-all
 
