@@ -1,4 +1,5 @@
-riscv-gnu-toolchain/
+llvm-project/
+embench-iot/
 *.ll
 *.bc
 *.riscrel
