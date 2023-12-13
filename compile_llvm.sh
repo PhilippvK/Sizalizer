@@ -18,7 +18,7 @@ cmake -G Ninja \
 	-DCMAKE_BUILD_TYPE=MinRelSize   \
 	-DCMAKE_C_Compiler="/opt/riscv/bin/clang" \
 	-DCMAKE_CXX_Compiler="/opt/riscv/bin/clang++" \
-	-DDEFAULT_SYSROOT="/opt/riscv/riscv32-unknown-elf" \
+	-DDEFAULT_SYSROOT="/opt/riscv/sysroot" \
 	-DGCC_INSTALL_PREFIX="/opt/riscv" 	\
 	-DLLVM_ENABLE_PROJECTS="clang;libc;lld;mlir"      \
 	-DLLVM_TARGET_ARCH="riscv32gc"  	\
