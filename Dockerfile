@@ -60,6 +60,8 @@ RUN apt-get install -y fish \
                     libglib2.0-dev
 
 
+RUN pip3 install pyelftools
+
 #####################################
 #### Copy folders of the context ####
 #####################################
