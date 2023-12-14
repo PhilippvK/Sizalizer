@@ -1,9 +1,6 @@
 [submodule "llvm-project"]
 	path = llvm-project
-	url = https://github.com/llvm/llvm-project
+	url = https://github.com/AndHager/llvm-project
 [submodule "embench-iot"]
 	path = embench-iot
-	url = https://github.com/embench/embench-iot
-[submodule "riscv-gnu-toolchain"]
-	path = riscv-gnu-toolchain
-	url = https://github.com/riscv-collab/riscv-gnu-toolchain
+	url = https://gitlab.lrz.de/aemy/administration/projects/scale4edge/embench-iot
