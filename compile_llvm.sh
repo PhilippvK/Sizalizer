@@ -10,6 +10,9 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 # clang++: error: -gsplit-dwarf is unsupported with RISC-V linker relaxation (-mrelax)
+
+# If --clean is not given, cmake will try to reuse build files. On first compilation, use --clean.
+if [[ "${1:-}" == "--clean" ]]; then
 cmake -G Ninja \
 	-DLLVM_PARALLEL_LINK_JOBS=2 						\
 	-DLLVM_PARALLEL_COMPILE_JOBS=4						\
@@ -30,7 +33,7 @@ cmake -G Ninja \
 	-DLLVM_USE_SPLIT_DWARF=OFF							\
 	-DLLVM_OPTIMIZED_TABLEGEN=ON						\
 	"/llvm-project/llvm"
-
+fi
 cmake --build .
 cmake --build . --target install
 

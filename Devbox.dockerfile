@@ -1,3 +1,8 @@
+# Dockerfile for local development, allows for mounting a build directory and
+# re-using build artifacts.
+# Use the devbox interactively:
+#   docker build -f Devbox.dockerfile -t devbox .
+#   docker run -it devbox -v /tmp/build:/llvm-project/build
 FROM ubuntu:22.04
 LABEL version="1.0"
 LABEL description="SEAL Image"
@@ -62,6 +67,14 @@ RUN apt-get install -y fish \
 
 RUN pip3 install pyelftools
 
+##################################
+#### Download riscv Toolchain ####
+##################################
+WORKDIR /opt
+    RUN wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
+        && tar xf riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
+        && rm riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
+
 #####################################
 #### Copy folders of the context ####
 #####################################
@@ -72,19 +85,11 @@ WORKDIR /
     COPY compile_embench_iot.sh /
     COPY embench-iot /embench-iot
 
-##################################
-#### Download riscv Toolchain ####
-##################################
-WORKDIR /opt
-    RUN wget -q https://github.com/riscv-collab/riscv-gnu-toolchain/releases/download/2023.11.22/riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
-        && tar xf riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz \
-        && rm riscv32-glibc-ubuntu-22.04-llvm-nightly-2023.11.22-nightly.tar.gz
-
 ###########################################
 #### Build Clang, Passes and set paths ####
 ###########################################
 WORKDIR /
-    RUN ./compile_llvm.sh --clean
+    RUN mkdir /llvm-project/build
 
 # WORKDIR /llvm-project
     # Set Path to compilde clang, clang++, ...
@@ -101,3 +106,6 @@ WORKDIR /
 #    RUN export ASAN_SYMBOLIZER=$BUILD_BIN/llvm-symbolizer
 #     RUN export ASAN_OPTIONS=detect_leaks=0
 
+VOLUME /llvm-project/build
+
+ENTRYPOINT /bin/sh
