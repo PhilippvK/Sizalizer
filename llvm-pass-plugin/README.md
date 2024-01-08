@@ -15,10 +15,7 @@ more abstract LLVM IR.
 Build memgraph container:
 
 ```bash
-
-      // Close DB connection
-      mg_session_destroy(session);
-      mg_finalize();
+docker run -p 7687:7687 -p 7444:7444 -p 3000:3000 --name memgraph memgraph/memgraph-platform
 ```
 
 Run memgraph:
