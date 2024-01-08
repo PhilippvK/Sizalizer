@@ -11,6 +11,9 @@
 using namespace llvm;
 using namespace std;
 
+#define PRINT_IR true
+#define DEBUG false
+
 namespace
 {
 
@@ -36,7 +39,9 @@ namespace
         mg_session *connect_to_db(const char *host, uint16_t port)
         {
             mg_init();
+#if DEBUG
             printf("mgclient version: %s\n", mg_client_version());
+#endif
 
             mg_session_params *params = mg_session_params_make();
             if (!params)
@@ -95,7 +100,9 @@ namespace
             }
             else
             {
-                // printf("query executed successfuly and returned %d rows\n", rows);
+#if DEBUG
+                printf("query executed successfuly and returned %d rows\n", rows);
+#endif
             }
         }
 
@@ -123,8 +130,9 @@ namespace
 
         PreservedAnalyses run(Module &M, ModuleAnalysisManager &MAM)
         {
+#if DEBUG
             outs() << "Running CDFGPass\n";
-
+#endif
             mg_session *session = connect_to_db("localhost", 7687);
 
             // Clear database
@@ -133,18 +141,21 @@ namespace
 
             // Push CDFG to DB
             string module_name = M.getName().str();
+#if PRINT_IR
             outs() << "Module Name: " << module_name << "\n";
+#endif
             for (Function &F : M)
             {
                 string f_name = F.getName().str();
-                outs() << f_name << "\n";
-
+#if PRINT_IR
+                outs() << " Function" << f_name << "\n";
+#endif
                 for (BasicBlock &bb : F)
                 {
                     string bb_name = get_bb_name(&bb);
-                    outs() << "Label: " << bb_name << "\n";
-
-
+#if PRINT_IR
+                    outs() << "  Label: " << bb_name << "\n";
+#endif
                     for (BasicBlock *suc_bb : successors(&bb))
                     {
                         connect_bbs(session, &bb, suc_bb, f_name, module_name);
@@ -153,7 +164,9 @@ namespace
                     for (Instruction &inst : bb)
                     {
                         string inst_str = llvm_to_string(&inst);
-                        outs() << "  " << inst_str;
+#if PRINT_IR
+                        outs() << "   " << inst_str;
+#endif
 
                         Instruction::op_iterator opEnd = inst.op_end();
                         for (Instruction::op_iterator opi = inst.op_begin(); opi != opEnd; opi++)
@@ -164,8 +177,9 @@ namespace
                             if (!tp->isLabelTy())
                             {
                                 string src_str = llvm_to_string(op);
-                                // outs() << "    - " << src_str;
-
+#if DEBUG
+                                outs() << "    - " << src_str;
+#endif
                                 connect_insts(session, src_str, inst_str, f_name, module_name);
                             }
                         }
