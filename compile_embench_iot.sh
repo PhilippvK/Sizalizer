@@ -14,8 +14,8 @@ python3 ./build_all.py \
     --logdir "$LOG_DIR" \
     --arch riscv32 \
     --board ri5cyverilator \
-    --cc /home/andi/seal/llvm-project/build/bin/clang \
-    --ld /home/andi/seal/llvm-project/build/bin/ld.lld \
+    --cc /opt/riscv/bin/clang \
+    --ld /opt/riscv/bin/ld.lld \
     --cflags "--target=riscv32 -march=rv32i -static" \
     --cpu-mhz 1 \
     --warmup-heat 1 \
