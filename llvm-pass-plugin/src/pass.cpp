@@ -24,27 +24,46 @@ namespace
       return OS.str();
     }
 
-    string bb_to_string(BasicBlock *bb)
+    template <typename LLVM_Type>
+    string llvm_to_string(LLVM_Type *obj)
     {
       string str;
       raw_string_ostream OS(str);
-      OS << *bb << "\n";
+      OS << *obj << "\n";
       return OS.str();
     }
 
-    string inst_to_string(Instruction *inst)
+    mg_session *connect_to_db(const char *host, uint16_t port)
     {
-      string str;
-      raw_string_ostream OS(str);
-      OS << *inst << "\n";
-      return OS.str();
+      mg_init();
+      printf("mgclient version: %s\n", mg_client_version());
+
+      mg_session_params *params = mg_session_params_make();
+      if (!params)
+      {
+        fprintf(stderr, "failed to allocate session parameters\n");
+        exit(1);
+      }
+      mg_session_params_set_host(params, host);
+      mg_session_params_set_port(params, port);
+      mg_session_params_set_sslmode(params, MG_SSLMODE_DISABLE);
+
+      mg_session *session = NULL;
+      int status = mg_connect(params, &session);
+      mg_session_params_destroy(params);
+      if (status < 0)
+      {
+        printf("failed to connect to Memgraph: %s\n", mg_session_error(session));
+        mg_session_destroy(session);
+        exit(1);
+      }
+      return session;
     }
 
-    string value_to_string(Value *value) {
-      string str;
-      raw_string_ostream OS(str);
-      OS << *value << "\n";
-      return OS.str();
+    void disconnect(mg_session *session)
+    {
+      mg_session_destroy(session);
+      mg_finalize();
     }
 
     void exec_qeury(mg_session *session, const char *query)
@@ -84,11 +103,21 @@ namespace
     {
       // MERGE: create if not exist else match
       string store_first = "MERGE (first_bb {name: '" + get_bb_name(first_bb) + "'})";
-      string set_frist_code = " SET first_bb.code =  '" + bb_to_string(first_bb) + "'";
+      string set_frist_code = " SET first_bb.code =  '" + llvm_to_string(first_bb) + "'";
       string store_second = " MERGE (second_bb {name: '" + get_bb_name(second_bb) + "'})";
-      string set_second_code = " SET second_bb.code =  '" + bb_to_string(second_bb) + "'";
+      string set_second_code = " SET second_bb.code =  '" + llvm_to_string(second_bb) + "'";
       string rel = " MERGE (first_bb)-[:CFG]->(second_bb);";
       string qry = store_first + set_frist_code + store_second + set_second_code + rel;
+      exec_qeury(session, qry.c_str());
+    }
+
+    void connect_insts(mg_session *session, string src_str, string dst_str)
+    {
+      // MERGE: create if not exist else match
+      string store_src = "MERGE (src_inst {name: '" + src_str + "'})";
+      string store_dst = " MERGE (dst_inst {name: '" + dst_str + "'})";
+      string rel = " MERGE (src_inst)-[:DFG]->(dst_inst);";
+      string qry = store_src + store_dst + rel;
       exec_qeury(session, qry.c_str());
     }
 
@@ -96,29 +125,7 @@ namespace
     {
       outs() << "Running MyPass\n";
 
-      // Open DB connection
-      mg_init();
-      printf("mgclient version: %s\n", mg_client_version());
-
-      mg_session_params *params = mg_session_params_make();
-      if (!params)
-      {
-        fprintf(stderr, "failed to allocate session parameters\n");
-        exit(1);
-      }
-      mg_session_params_set_host(params, "localhost");
-      mg_session_params_set_port(params, 7687);
-      mg_session_params_set_sslmode(params, MG_SSLMODE_DISABLE);
-
-      mg_session *session = NULL;
-      int status = mg_connect(params, &session);
-      mg_session_params_destroy(params);
-      if (status < 0)
-      {
-        printf("failed to connect to Memgraph: %s\n", mg_session_error(session));
-        mg_session_destroy(session);
-        exit(1);
-      }
+      mg_session *session = connect_to_db("localhost", 7687);
 
       // Clear database
       auto del = "MATCH (n) DETACH DELETE n;";
@@ -141,7 +148,7 @@ namespace
         for (Instruction &inst : bb)
         {
 
-          string inst_str = inst_to_string(&inst);
+          string inst_str = llvm_to_string(&inst);
           outs() << "  " << inst_str;
 
           Instruction::op_iterator opEnd = inst.op_end();
@@ -152,23 +159,16 @@ namespace
             Type *tp = op->getType();
             if (!tp->isLabelTy())
             {
-              string src_str = value_to_string(op);
+              string src_str = llvm_to_string(op);
               // outs() << "    - " << src_str;
 
-              // MERGE: create if not exist else match
-              string store_src = "MERGE (src_inst {name: '" + src_str + "'})";
-              string store_dst = " MERGE (dst_inst {name: '" + inst_str + "'})";
-              string rel = " MERGE (src_inst)-[:DFG]->(dst_inst);";
-              string qry = store_src + store_dst + rel;
-              exec_qeury(session, qry.c_str());
+              connect_insts(session, src_str, inst_str);
             }
           }
         }
       }
 
-      // Close DB connection
-      mg_session_destroy(session);
-      mg_finalize();
+      disconnect(session);
 
       return PreservedAnalyses::all();
     }
