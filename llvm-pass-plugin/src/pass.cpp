@@ -99,23 +99,23 @@ namespace
             }
         }
 
-        void connect_bbs(mg_session *session, BasicBlock *first_bb, BasicBlock *second_bb)
+        void connect_bbs(mg_session *session, BasicBlock *first_bb, BasicBlock *second_bb, string f_name)
         {
             // MERGE: create if not exist else match
-            string store_first = "MERGE (first_bb {name: '" + get_bb_name(first_bb) + "'})";
+            string store_first = "MERGE (first_bb {name: '" + get_bb_name(first_bb) + "', func_name: '" + f_name + "'})";
             string set_frist_code = " SET first_bb.code =  '" + llvm_to_string(first_bb) + "'";
-            string store_second = " MERGE (second_bb {name: '" + get_bb_name(second_bb) + "'})";
+            string store_second = " MERGE (second_bb {name: '" + get_bb_name(second_bb) + "', func_name: '" + f_name + "'})";
             string set_second_code = " SET second_bb.code =  '" + llvm_to_string(second_bb) + "'";
             string rel = " MERGE (first_bb)-[:CFG]->(second_bb);";
             string qry = store_first + set_frist_code + store_second + set_second_code + rel;
             exec_qeury(session, qry.c_str());
         }
 
-        void connect_insts(mg_session *session, string src_str, string dst_str)
+        void connect_insts(mg_session *session, string src_str, string dst_str, string f_name)
         {
             // MERGE: create if not exist else match
-            string store_src = "MERGE (src_inst {name: '" + src_str + "'})";
-            string store_dst = " MERGE (dst_inst {name: '" + dst_str + "'})";
+            string store_src = "MERGE (src_inst {name: '" + src_str + "', func_name: '" + f_name + "'})";
+            string store_dst = " MERGE (dst_inst {name: '" + dst_str + "', func_name: '" + f_name + "'})";
             string rel = " MERGE (src_inst)-[:DFG]->(dst_inst);";
             string qry = store_src + store_dst + rel;
             exec_qeury(session, qry.c_str());
@@ -134,19 +134,22 @@ namespace
             // Push CDFG to DB
             for (Function &F : M)
             {
+                string f_name = F.getName().str();
+                outs() << f_name << "\n";
+
                 for (BasicBlock &bb : F)
                 {
                     string bb_name = get_bb_name(&bb);
                     outs() << "Label: " << bb_name << "\n";
 
+
                     for (BasicBlock *suc_bb : successors(&bb))
                     {
-                        connect_bbs(session, &bb, suc_bb);
+                        connect_bbs(session, &bb, suc_bb, f_name);
                     }
 
                     for (Instruction &inst : bb)
                     {
-
                         string inst_str = llvm_to_string(&inst);
                         outs() << "  " << inst_str;
 
@@ -161,7 +164,7 @@ namespace
                                 string src_str = llvm_to_string(op);
                                 // outs() << "    - " << src_str;
 
-                                connect_insts(session, src_str, inst_str);
+                                connect_insts(session, src_str, inst_str, f_name);
                             }
                         }
                     }
