@@ -1,3 +1,4 @@
+.vscode/
 build/
 example/hello.bc
 hello.riscrel
@@ -5,3 +6,5 @@ hello.riscvrel
 a.out
 example/hello
 example/hello.ll
+example/it
+example/primes
