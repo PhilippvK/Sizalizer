@@ -131,9 +131,6 @@ namespace
             auto del = "MATCH (n) DETACH DELETE n;";
             exec_qeury(session, del);
 
-            // mapp the var to the last bb name
-            map<string, string> var_to_bb;
-
             // Push CDFG to DB
             for (Function &F : M)
             {
