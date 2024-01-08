@@ -29,6 +29,33 @@ docker start memgraph
 
 Web interface available at: `http://localhost:3000/`
 
+Memgraph graph style:
+
+```json
+@NodeStyle {
+  size: 3
+  label: Property(node, "name")
+  border-width: 1
+  border-color: #ffffff
+  shadow-color: #333333
+  shadow-size: 20
+}
+
+@EdgeStyle {
+  width: 0.4
+  label: Type(edge)
+  arrow-size: 1
+  color: #6AA84F
+}
+```
+
+Geh whole graph:
+
+```json
+MATCH p=(n)-[r]-(m)
+RETURN *;
+```
+
 Build pass with:
 
 ```bash
