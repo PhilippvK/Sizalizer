@@ -9,16 +9,20 @@ LOG_DIR="${EMBENCH_DIR}/log"
 
 cd "$EMBENCH_DIR"
 
-python3 ./build_all.py \
-    --builddir "$BUILD_DIR" \
-    --logdir "$LOG_DIR" \
-    --arch riscv32 \
-    --board ri5cyverilator \
-    --cc /opt/riscv/bin/clang \
-    --ld /opt/riscv/bin/ld.lld \
-    --cflags "--target=riscv32 -march=rv32i -static" \
-    --cpu-mhz 1 \
-    --warmup-heat 1 \
-    --timeout 10
+# Build benchmarks
+python3 python3 ./build_all.py \
+                    --clean \
+                    --verbose \
+                    --arch=riscv32 \
+                    --chip=generic \
+                    --board=ri5cyverilator \
+                    --cc=/opt/riscv/bin/clang \
+                    --cflags="-fno-builtin-bcmp -Oz -msave-restore" \
+                    --ldflags="-nostartfiles -nostdlib" \
+                    --dummy-libs="crt0 libc libgcc libm"
+
+# Run benchmarks
+python3 ./benchmark_size.py --json-output --json-comma
+
 
 cd "$SCRIPT_ROOT"
