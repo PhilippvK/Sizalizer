@@ -10,14 +10,14 @@ LOG_DIR="${EMBENCH_DIR}/log"
 cd "$EMBENCH_DIR"
 
 # Build benchmarks
-python3 python3 ./build_all.py \
+python3 ./build_all.py \
                     --clean \
                     --verbose \
                     --arch=riscv32 \
                     --chip=generic \
                     --board=ri5cyverilator \
-                    --cc=/opt/riscv/bin/clang \
-                    --cflags="-fno-builtin-bcmp -Oz -msave-restore" \
+                    --cc=clang \
+                    --cflags="-fno-builtin-bcmp -Oz -msave-restore -fpass-plugin=/home/andi/Desktop/CodeCompression/seal/llvm-pass-plugin/build/libLLVMCDFG.so" \
                     --ldflags="-nostartfiles -nostdlib" \
                     --dummy-libs="crt0 libc libgcc libm"
 
