@@ -11,8 +11,10 @@
 using namespace llvm;
 using namespace std;
 
-#define PRINT_IR true
 #define DEBUG false
+
+#define PRINT_IR true
+#define PURGE_DB false
 
 namespace
 {
@@ -135,9 +137,11 @@ namespace
 #endif
             mg_session *session = connect_to_db("localhost", 7687);
 
+#if PURGE_DB
             // Clear database
             auto del = "MATCH (n) DETACH DELETE n;";
             exec_qeury(session, del);
+#endif
 
             // Push CDFG to DB
             string module_name = M.getName().str();
