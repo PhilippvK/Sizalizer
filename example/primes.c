@@ -18,14 +18,14 @@ int main() {
 
   printf("Prime numbers between %d and %d are:\n", n1, n2);
 
-  for(int i = n1+1; i < n2; ++i) {
+  for(int i = n1; i < n2; ++i) {
     // if i is a prime number, flag will be equal to 1
     flag = check_prime(i);
 
     if(flag)
       printf("%d, ", i);
   }
-
+  puts("");
   return 0;
 }
 

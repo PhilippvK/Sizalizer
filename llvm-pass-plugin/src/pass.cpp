@@ -13,7 +13,7 @@ using namespace std;
 
 #define DEBUG false
 
-#define PRINT_IR true
+#define PRINT_IR false
 #define PURGE_DB false
 
 namespace
@@ -120,11 +120,11 @@ namespace
             exec_qeury(session, qry.c_str());
         }
 
-        void connect_insts(mg_session *session, string src_str, string dst_str, string f_name, string module_name)
+        void connect_insts(mg_session *session, string src_str, string src_op_name, string dst_str, string dst_op_name, string f_name, string module_name)
         {
             // MERGE: create if not exist else match
-            string store_src = "MERGE (src_inst {name: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string store_dst = " MERGE (dst_inst {name: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string store_src = "MERGE (src_inst {name: '" + src_op_name + "', inst: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string store_dst = " MERGE (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
             string rel = " MERGE (src_inst)-[:DFG]->(dst_inst);";
             string qry = store_src + store_dst + rel;
             exec_qeury(session, qry.c_str());
@@ -152,7 +152,7 @@ namespace
             {
                 string f_name = F.getName().str();
 #if PRINT_IR
-                outs() << " Function" << f_name << "\n";
+                outs() << " Function: " << f_name << "\n";
 #endif
                 for (BasicBlock &bb : F)
                 {
@@ -168,6 +168,7 @@ namespace
                     for (Instruction &inst : bb)
                     {
                         string inst_str = llvm_to_string(&inst);
+                        string op_name = inst.getOpcodeName();
 #if PRINT_IR
                         outs() << "   " << inst_str;
 #endif
@@ -181,10 +182,16 @@ namespace
                             if (!tp->isLabelTy())
                             {
                                 string src_str = llvm_to_string(op);
+                                string src_op_name = "Const";
+                                
+                                Instruction *src_inst = dyn_cast<Instruction>(op);
+                                if (src_inst) {
+                                    src_op_name = src_inst->getOpcodeName();
+                                }
 #if DEBUG
                                 outs() << "    - " << src_str;
 #endif
-                                connect_insts(session, src_str, inst_str, f_name, module_name);
+                                connect_insts(session, src_str, src_op_name, inst_str, op_name, f_name, module_name);
                             }
                         }
                     }
