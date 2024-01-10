@@ -79,20 +79,13 @@ RETURN *;
 Get matching triples of instructions:
 
 ```
-MATCH (n1)
-MATCH (m1)
-MATCH (n2)
-MATCH (m2)
-MATCH (n3)
-MATCH (m3)
-MATCH p1=(n1)-[r1:DFG]->(m1)
-MATCH p2=(n2)-[r2:DFG]->(m2)
-MATCH p3=(n3)-[r3:DFG]->(m3)
-WHERE ((NOT n1.name = 'Const') AND (NOT m1.name = 'Const')
-    AND n1.name = n2.name AND m1.name = m2.name 
-    AND n1 != n2 AND m1 != m2
-    AND n2.name = n3.name AND m2.name = m3.name 
-    AND n2 != n3 AND m2 != m3)
+MATCH p1=(n1)-[r1:DFG]->(m1)-[i1:DFG]->(j1)
+MATCH p2=(n2)-[r2:DFG]->(m2)-[i2:DFG]->(j2)
+WHERE ((NOT n1.name = 'Const') AND (NOT m1.name = 'Const') AND (NOT j1.name = 'Const')
+    AND (NOT n1.name = 'phi') AND (NOT m1.name = 'phi') AND (NOT j1.name = 'phi')
+    AND (NOT n1.name = 'call') AND (NOT m1.name = 'call') AND (NOT j1.name = 'call')
+    AND n1.name = n2.name AND m1.name = m2.name AND j1.name = j2.name 
+    AND n1 != n2 AND m1 != m2 AND j1 != j2)
 RETURN p1;
 ```
 
