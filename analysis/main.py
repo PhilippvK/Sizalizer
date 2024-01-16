@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-
 def clear_db(client):
     records, summary, keys = client.execute_query(
         'MATCH (n) DETACH DELETE n;'
@@ -56,8 +55,30 @@ def plot_bars(stats, length):
 
     plt.savefig('./out/' + name + '_most_chains.pdf')
 
+def plot_nodes(client, threshold=1000):
+    query = 'MATCH (n) RETURN n;'
+    
+    # Count the number of nodes in the database
+    records, summary, keys = client.execute_query(
+        query
+    )
 
-def print_duplicated_chains(client, length, ignore=['Const', 'phi']):
+    # Get the result
+    recs = [
+        record['n']['name']
+        for record in records
+    ]
+    recs_cout = {
+        nodes: recs.count(nodes)
+        for nodes in recs
+    }
+    print(recs_cout)
+
+    sorted = sort_dict(recs_cout, threshold)
+    plot_bars(sorted, 1)
+
+
+def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=100):
     if type(length) == int and length > 0:
         query = 'MATCH p0=(n0)'
         for i in range(1, length):
@@ -69,7 +90,9 @@ def print_duplicated_chains(client, length, ignore=['Const', 'phi']):
                 for i in range(0, length):
                     query += f'(NOT n{i}.name = \'{name}\') AND '
 
-        query += 'true) RETURN p0;'
+            query += 'true)'
+
+        query += ' RETURN p0;'
         
         # Count the number of nodes in the database
         print('INFO', length, 'query:', query)
@@ -94,7 +117,7 @@ def print_duplicated_chains(client, length, ignore=['Const', 'phi']):
         }
         print(recs_cout)
 
-        sorted = sort_dict(recs_cout, 85)
+        sorted = sort_dict(recs_cout, threshold)
         plot_bars(sorted, length)
 
 
@@ -119,10 +142,12 @@ def main(args):
             clear_db(client)
         else:
             print_num_nodes(client)
-            print_duplicated_chains(client, 2)
-            print_duplicated_chains(client, 3)
-            print_duplicated_chains(client, 4)
-            print_duplicated_chains(client, 5)
+            plot_nodes(client, 500)
+            ignore = ['Const']
+            plot_duplicated_chains(client, 2, ignore, 500)
+            plot_duplicated_chains(client, 3, ignore, 300)
+            plot_duplicated_chains(client, 4, ignore, 250)
+            plot_duplicated_chains(client, 5, ignore, 250)
         
 
 if __name__ == '__main__':
