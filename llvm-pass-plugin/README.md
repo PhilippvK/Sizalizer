@@ -89,6 +89,19 @@ WHERE ((NOT n1.name = 'Const') AND (NOT m1.name = 'Const') AND (NOT j1.name = 'C
 RETURN p1;
 ```
 
+Get load -> X -> store triplet:
+```
+MATCH p=(n0)-[:DFG]->(n1)-[:DFG]->(n2)
+WHERE (
+  NOT n0.name = 'Const' 
+  AND NOT n1.name = 'Const' 
+  AND NOT n2.name = 'Const'
+  AND n0.name = 'load'
+  AND n2.name = 'store'
+)
+RETURN p;
+```
+
 Build pass with:
 
 ```bash
