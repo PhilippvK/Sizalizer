@@ -37,7 +37,6 @@ RUN apt-get install -y fish \
                     automake \
                     curl \
                     gawk \
-                    build-essential \
                     bison \
                     flex \
                     texinfo \

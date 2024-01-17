@@ -17,7 +17,7 @@ python3 ./build_all.py \
                     --chip=generic \
                     --board=ri5cyverilator \
                     --cc=clang \
-                    --cflags="-fno-builtin-bcmp -Oz -msave-restore -fpass-plugin=/home/andi/Desktop/CodeCompression/seal/llvm-pass-plugin/build/libLLVMCDFG.so" \
+                    --cflags="-fno-builtin-bcmp -Oz -msave-restore -fpass-plugin=/home/ahc/Desktop/CodeComp/seal/llvm-pass-plugin/build/libLLVMCDFG.so" \
                     --ldflags="-nostartfiles -nostdlib" \
                     --dummy-libs="crt0 libc libgcc libm"
 

@@ -13,6 +13,6 @@ add_library(LLVMCDFG MODULE
     src/pass.cpp
 )
 
-TARGET_LINK_LIBRARIES(LLVMCDFG mgclient)
+TARGET_LINK_LIBRARIES(LLVMCDFG /usr/local/lib/libmgclient.so)
 
 SET(CMAKE_CXX_FLAGS "-Wall")

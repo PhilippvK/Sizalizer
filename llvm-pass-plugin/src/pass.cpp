@@ -77,7 +77,7 @@ namespace
         {
             if (mg_session_run(session, query, NULL, NULL, NULL, NULL) < 0)
             {
-                outs() << "failed to execute query: " << mg_session_error(session) << "\n";
+                outs() << "failed to execute query: " << query << " mg error: " << mg_session_error(session) << "\n";
                 mg_session_destroy(session);
                 exit(1);
             }
@@ -120,13 +120,26 @@ namespace
             exec_qeury(session, qry.c_str());
         }
 
+        string sanitize_str(string str) {
+            replace(str.begin(), str.end(), '\n', '_');
+            replace(str.begin(), str.end(), '\"', '_');
+            replace(str.begin(), str.end(), '\\', '_');
+            replace(str.begin(), str.end(), '\'', '_');
+            replace(str.begin(), str.end(), '(', '_');
+            replace(str.begin(), str.end(), ')', '_');
+            return str;
+        }
+
         void connect_insts(mg_session *session, string src_str, string src_op_name, string dst_str, string dst_op_name, string f_name, string module_name)
         {
             // MERGE: create if not exist else match
+            src_str = sanitize_str(src_str);
+            dst_str = sanitize_str(dst_str);
+
             string store_src = "MERGE (src_inst {name: '" + src_op_name + "', inst: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string store_dst = " MERGE (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string rel = " MERGE (src_inst)-[:DFG]->(dst_inst);";
-            string qry = store_src + store_dst + rel;
+            string store_dst = "MERGE (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string rel = "MERGE (src_inst)-[:DFG]->(dst_inst);";
+            string qry = store_src + '\n' + store_dst + '\n' + rel + '\n';
             exec_qeury(session, qry.c_str());
         }
 

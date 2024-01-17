@@ -148,6 +148,9 @@ def main(args):
             plot_duplicated_chains(client, 3, ignore, 300)
             plot_duplicated_chains(client, 4, ignore, 250)
             plot_duplicated_chains(client, 5, ignore, 250)
+            plot_duplicated_chains(client, 6, ignore, 250)
+            plot_duplicated_chains(client, 7, ignore, 250)
+            plot_duplicated_chains(client, 8, ignore, 250)
         
 
 if __name__ == '__main__':
