@@ -19,9 +19,9 @@ def sort_dict(result, threshold=0):
     return sorted(vals, key=lambda x:x[1], reverse=True)
 
 
-def plot_bars(stats, length):
+def plot_bars(stats, name):
     # set width of bars
-    name = 'DFG_ ' + str(length)
+    name = 'DFG_ ' + str(name)
 
     bar_width = 0.20
 
@@ -78,9 +78,29 @@ def plot_nodes(client, threshold=1000):
     plot_bars(sorted, 1)
 
 
+def get_rel_res(records, threshold):
+    recs = [
+        ' -> '.join([
+            node['name']
+            for node in list(dict.fromkeys([
+                node
+                for r in record['p']
+                for node in r.nodes
+        ]))])
+        for record in records
+    ]
+    recs_cout = {
+        nodes: recs.count(nodes)
+        for nodes in recs
+    }
+    print(recs_cout)
+
+    return sort_dict(recs_cout, threshold)
+
+
 def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=100):
     if type(length) == int and length > 0:
-        query = 'MATCH p0=(n0)'
+        query = 'MATCH p=(n0)'
         for i in range(1, length):
             query += f'-[r{i}:DFG]->(n{i})'
 
@@ -92,7 +112,7 @@ def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=10
 
             query += 'true)'
 
-        query += ' RETURN p0;'
+        query += ' RETURN p;'
         
         # Count the number of nodes in the database
         print('INFO', length, 'query:', query)
@@ -101,24 +121,35 @@ def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=10
         )
 
         # Get the result
-        recs = [
-            ' -> '.join([
-                node['name']
-                for node in list(dict.fromkeys([
-                    node
-                    for r in record['p0']
-                    for node in r.nodes
-            ]))])
-            for record in records
-        ]
-        recs_cout = {
-            nodes: recs.count(nodes)
-            for nodes in recs
-        }
-        print(recs_cout)
-
-        sorted = sort_dict(recs_cout, threshold)
+        sorted = get_rel_res(records, threshold)
         plot_bars(sorted, length)
+
+
+def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['Const', 'phi'], threshold=100):
+    if type(length) == int and length > 1:
+        query = 'MATCH p=(n0)'
+        for i in range(1, length):
+            query += f'-[r{i}:DFG]->(n{i})'
+
+
+        query += ' WHERE ('
+
+        if len(ignore) > 0:
+            for name in ignore:
+                for i in range(0, length):
+                    query += f'(NOT n{i}.name = \'{name}\') AND '
+
+        query += f'n0.name = \'{first}\' AND n{length - 1}.name = \'{last}\') RETURN p;'
+        
+        # Count the number of nodes in the database
+        print(f'INFO {first} -> {length - 1}*X -> {last} query: {query}')
+        records, summary, keys = client.execute_query(
+            query
+        )
+
+        # Get the result
+        sorted = get_rel_res(records, threshold)
+        plot_bars(sorted, first + '_' + str(length - 1) + 'xX_' + last)
 
 
 def print_num_nodes(client):
@@ -135,6 +166,7 @@ def print_num_nodes(client):
 def main(args):
     uri = 'bolt://' + args.host + ':' + str(args.port)
     auth = ('', '')
+    plot_dup_chains = args.pdc
 
     with GraphDatabase.driver(uri, auth=auth) as client:
         client.verify_connectivity()
@@ -142,20 +174,28 @@ def main(args):
             clear_db(client)
         else:
             print_num_nodes(client)
+
             plot_nodes(client, 500)
+
             ignore = ['Const']
-            plot_duplicated_chains(client, 2, ignore, 500)
-            plot_duplicated_chains(client, 3, ignore, 300)
-            plot_duplicated_chains(client, 4, ignore, 250)
-            plot_duplicated_chains(client, 5, ignore, 250)
-            plot_duplicated_chains(client, 6, ignore, 250)
-            plot_duplicated_chains(client, 7, ignore, 250)
-            plot_duplicated_chains(client, 8, ignore, 250)
+            plot_chains_with_fiexed_start_end(client, 2, 'load', 'store', ignore, 50)
+            plot_chains_with_fiexed_start_end(client, 3, 'load', 'store', ignore, 50)
+            plot_chains_with_fiexed_start_end(client, 4, 'load', 'store', ignore, 50)
+
+            if plot_dup_chains:
+                plot_duplicated_chains(client, 2, ignore, 500)
+                plot_duplicated_chains(client, 3, ignore, 300)
+                plot_duplicated_chains(client, 4, ignore, 250)
+                plot_duplicated_chains(client, 5, ignore, 250)
+                plot_duplicated_chains(client, 6, ignore, 250)
+                plot_duplicated_chains(client, 7, ignore, 250)
+                plot_duplicated_chains(client, 8, ignore, 250)
         
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Analyze the File.')
     parser.add_argument('--host', nargs='?', type=str, default='localhost', help='host of the memgraph (or Neo4j) DB (reachable over bolt)')
     parser.add_argument('--port', nargs='?', type=int, default=7687, help='port of the Memgraph DB')
+    parser.add_argument('--pdc', nargs='?', type=bool, default=False, help='Plot Duplicated Chains')
     parser.add_argument('--clear-db', nargs='?', type=bool, default=False, help='Clear the DB')
     main(parser.parse_args())
