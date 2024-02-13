@@ -268,13 +268,13 @@ def main(args):
     instructions = parse_file(fqpn)
 
     for mode in Mode:
-        stats = most_inst(instructions, mode, SearchKey.MNEMONIC, 100)
+        stats = most_inst(instructions, mode, SearchKey.MNEMONIC, 40000)
         plot_bars(stats, str(file), mode)
 
     stats = most_inst(instructions, Mode.ALL, SearchKey.OPCODE, 50000)
     plot_bars(stats, str(file), Mode.ALL, SearchKey.OPCODE)
 
-    stats = most_inst(instructions, Mode.ALL, SearchKey.REGISTER, 200000)
+    stats = most_inst(instructions, Mode.ALL, SearchKey.REGISTER, 150000)
     plot_bars(stats, str(file), Mode.ALL, SearchKey.REGISTER)
     
     chains = longest_chains(instructions, 5)
