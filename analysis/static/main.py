@@ -152,6 +152,13 @@ def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['Cons
         plot_bars(sorted, first + '_' + str(length - 1) + 'xX_' + last)
 
 
+def plot_vec_insts(client):
+    '''ToDo: Match for (load) -> ...[some arithmetic insts]... -> (store)'''
+    'ToDo: get vec length'
+    'ToDo: get arithmetic chain'
+    pass
+
+
 def print_num_nodes(client):
     # Count the number of nodes in the database
     records, summary, keys = client.execute_query(
