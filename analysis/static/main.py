@@ -54,6 +54,7 @@ def plot_bars(stats, name):
     plt.tight_layout()
 
     plt.savefig('./out/' + name + '_most_chains.pdf')
+    plt.close()
 
 def plot_nodes(client, threshold=1000):
     query = 'MATCH (n) RETURN n;'

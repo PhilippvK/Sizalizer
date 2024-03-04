@@ -45,6 +45,17 @@ class Instruction:
         if self.mnemonic in no_dest:
             return self.regs
         return self.regs[1:]
+    
+    def get_imm(self):
+        for reg in self.regs:
+            vals = reg.split('=')
+            vlen = len(vals)
+            if vlen != 2:
+                print('ERROR false vals len:', reg)
+                print(str(self))
+            assert(vlen == 2)
+            if 'imm' == vals[0]:
+                return int(vals[1])
 
     def get_dest(self):
         if self.mnemonic in no_dest or len(self.regs) < 1:
@@ -64,6 +75,7 @@ class SearchKey(Enum):
     REGISTER = 'register'
     CHAIN = 'chain'
     PAIR = 'pair'
+    IMM = 'imm'
 
 prototype = Optional('0x' +
     Word(hexnums)('address') + ':'
@@ -212,6 +224,21 @@ def most_pairs(instructions, threshold=5, equal=True, connected=False):
     return sort_dict(result, threshold)
 
 
+def addi_vals(instructions, treshold=5):
+    result = {}
+    for inst in instructions:
+        if inst.mnemonic == 'addi':
+            key = inst.get_imm()
+            if key != None:
+                if key in result:
+                    result[key] += 1
+                else:
+                    result[key] = 1
+            else:
+                print('Error: inst does not contain imm:', str(inst))
+    return sort_dict(result, treshold)
+
+
 def get_improvement(stats, imp_map):
     imp = 0
     for stat in stats:
@@ -253,53 +280,55 @@ def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
     plt.tight_layout()
 
     plt.savefig('./out/' + name + '_most_' + search_key.value + '_' + mode.value + '.pdf')
-
+    plt.close()
 
 def main(args):
     path = Path(args.path).absolute()
-    file = args.file
-    if debug:
-        print('Base Path: ', path)
-        print('File to analyze: ', file)
+    for file in args.files:
+        if debug:
+            print('Base Path: ', path)
+            print('File to analyze: ', file)
 
 
-    instructions = []
-    fqpn = '{}/{}'.format(str(path), str(file))
-    instructions = parse_file(fqpn)
+        instructions = []
+        fqpn = '{}/{}'.format(str(path), str(file))
+        instructions = parse_file(fqpn)
 
-    for mode in Mode:
-        stats = most_inst(instructions, mode, SearchKey.MNEMONIC, 40000)
-        plot_bars(stats, str(file), mode)
+        for mode in Mode:
+            stats = most_inst(instructions, mode, SearchKey.MNEMONIC, 40000)
+            plot_bars(stats, str(file), mode)
 
-    stats = most_inst(instructions, Mode.ALL, SearchKey.OPCODE, 50000)
-    plot_bars(stats, str(file), Mode.ALL, SearchKey.OPCODE)
+        stats = most_inst(instructions, Mode.ALL, SearchKey.OPCODE, 50000)
+        plot_bars(stats, str(file), Mode.ALL, SearchKey.OPCODE)
 
-    stats = most_inst(instructions, Mode.ALL, SearchKey.REGISTER, 150000)
-    plot_bars(stats, str(file), Mode.ALL, SearchKey.REGISTER)
-    
-    chains = longest_chains(instructions, 5)
-    plot_bars(chains, str(file), Mode.ALL, SearchKey.CHAIN)
+        stats = most_inst(instructions, Mode.ALL, SearchKey.REGISTER, 150000)
+        plot_bars(stats, str(file), Mode.ALL, SearchKey.REGISTER)
+        
+        chains = longest_chains(instructions, 5)
+        plot_bars(chains, str(file), Mode.ALL, SearchKey.CHAIN)
 
+        addi_dist = addi_vals(instructions, 100)
+        plot_bars(addi_dist, str(file), Mode.FULL, SearchKey.IMM)
 
-    stats = most_inst(instructions, Mode.FULL, SearchKey.MNEMONIC, 1)
-    # x contains count of 32 Bit (4 Byte) instructions
-    # x*2 is the count of Bytes saved by a reduction to 16 bit inst
-    improvement = get_improvement(stats, lambda x: x*2)
-    print('Max. improvement by replacing all 32 Bit inst with 16 Bit inst: ' + str(improvement) + ' Byte')
+        stats = most_inst(instructions, Mode.FULL, SearchKey.MNEMONIC, 1)
+        # x contains count of 32 Bit (4 Byte) instructions
+        # x*2 is the count of Bytes saved by a reduction to 16 bit inst
+        improvement = get_improvement(stats, lambda x: x*2)
+        print('Max. improvement by replacing all 32 Bit inst with 16 Bit inst: ' + str(improvement) + ' Byte')
 
-    if debug:
-        pairs = most_pairs(instructions, 20, equal=True)
-        for pair in pairs:
-            print(pair)
-        print()
+        if debug:
+            pairs = most_pairs(instructions, 20, equal=True)
+            for pair in pairs:
+                print(pair)
+            print()
 
-        pairs = most_pairs(instructions, 100, equal=False)
-        for pair in pairs:
-            print(pair)
-        print()
+            pairs = most_pairs(instructions, 100, equal=False)
+            for pair in pairs:
+                print(pair)
+            print()
 
-    pairs = most_pairs(instructions, 50, equal=False, connected=True)
-    plot_bars(pairs, str(file), Mode.ALL, SearchKey.PAIR)
+        pairs = most_pairs(instructions, 50, equal=False, connected=True)
+        plot_bars(pairs, str(file), Mode.ALL, SearchKey.PAIR)
 
 
 
@@ -312,7 +341,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Count the instructions in an trace file.')
-    parser.add_argument('file', metavar='F', type=str, help='files to analyze')
+    parser.add_argument('files', metavar='F', type=str, nargs='+', help='files to analyze')
     parser.add_argument('--path', type=str, help='base path for the files')
 
     main(parser.parse_args())
