@@ -46,7 +46,7 @@ def plot_bars(stats, name):
             else: 
                 label += '\n'
                 nodes = line.split('-')
-                label += ' '*(len(nodes[0])-2) 
+                label += ' '*(len(nodes[0])-1) 
                 label += '\\-'
                 label += '-'.join(nodes[1:])
             first = False
@@ -114,7 +114,7 @@ def query_builder2(length=[1], width=1, special_cond='true', ignore=['Const', 'p
         for j in range(1, length[i]):
             if j - 1 in range(1, length[i-1]):
                 query += f'n{i-1}{j} != n{i}{j} AND '
-        query += f'p{i-1} != p{i} AND'
+        query += f'p{i-1} != p{i} AND '
     if special_cond == '':
         special_cond = 'true'
     query += '(' + special_cond + ')) RETURN p0'
@@ -264,9 +264,9 @@ def main(args):
                 plot_chains_with_fiexed_start_end(client, length, 'xor', 'store', ignore, 10)
                 plot_chains_with_fiexed_start_end(client, length, 'add', 'store', ignore, 10)
 
-            for length in range(2, 5):
+            for length in range(2, 6):
                 for width in range(2, 3):
-                    plot_paralell_chains_fixed_start(client, length, width, ignore, threshold=5)
+                    plot_paralell_chains_fixed_start(client, length, width, ignore, threshold=6)
 
             if plot_dup_chains:
                 for length in range(2, 9):
