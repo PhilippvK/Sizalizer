@@ -3,6 +3,9 @@ from neo4j import GraphDatabase
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rcParams["font.family"] = "cmb10"
+debug = False
+
 
 def clear_db(client):
     records, summary, keys = client.execute_query(
@@ -14,23 +17,23 @@ def sort_dict(result, threshold=0):
     vals = [
         val 
         for val in result.items()
-        if val[1] >= threshold
     ]
-    return sorted(vals, key=lambda x:x[1], reverse=True)
+    return sorted(vals, key=lambda x:x[1], reverse=True)[:threshold]
 
 
 def plot_bars(stats, name):
     # set width of bars
-    name = 'DFG_ ' + str(name)
+    name = str(name) + '_DFG'
 
     bar_width = 0.20
 
     plt.figure(figsize=(8, 3))
     plt.grid(visible = True, axis = 'y', color = 'gray', linestyle = '--', linewidth = 0.5, alpha = 0.7)
     plt.grid(visible = True, axis = 'y', which='minor', color='#999999', linestyle='-', alpha=0.2)
+    plt.rc('axes', unicode_minus=False)
 
     chains = [
-        pair[0]
+        str(pair[0])
         for pair in stats
     ]
     counts = [
@@ -56,9 +59,52 @@ def plot_bars(stats, name):
     plt.savefig('./out/' + name + '_most_chains.pdf')
     plt.close()
 
-def plot_nodes(client, threshold=1000):
-    query = 'MATCH (n) RETURN n;'
+def query_builder(length=1, width=1, special_cond='true', ignore=['Const', 'phi'], fixed_start=True):
+    return query_builder2(
+        [length for _ in range(width)],
+        width,
+        special_cond,
+        ignore
+    )
+
+def query_builder2(length=[1], width=1, special_cond='true', ignore=['Const', 'phi'], fixed_start=True):
+    assert len(length) == width
+    assert width > 0
+    query = ''
+    for i in range(width):
+        query += f'MATCH p{i}=(n'
+        if fixed_start:
+            query += '0'
+        else:
+            query += str(i)
+        query += '0)'
+        for j in range(1, length[i]):
+            query += f'-[r{i}{j}:DFG]->(n{i}{j})'
+        query += ' '
+    query += 'WHERE ('
+
+    if len(ignore) > 0:
+        for name in ignore:
+            start = 0
+            if fixed_start: 
+                start = 1
+                query += f'(NOT n00.name = \'{name}\') AND '
+            for i in range(start, width):
+                for j in range(start, length[i]):
+                    query += f'(NOT n{i}{j}.name = \'{name}\') AND '
+    if special_cond == '':
+        special_cond = 'true'
+    query += special_cond + ') RETURN p0'
     
+    for i in range(1, width):
+        query += f', p{i}'
+
+    return query + ';'
+
+
+def plot_nodes(client, threshold=10):
+    query = 'MATCH (n) WHERE n.name != \'Const\' AND n.name != \'phi\' RETURN n;'
+
     # Count the number of nodes in the database
     records, summary, keys = client.execute_query(
         query
@@ -73,19 +119,19 @@ def plot_nodes(client, threshold=1000):
         nodes: recs.count(nodes)
         for nodes in recs
     }
-    print(recs_cout)
+    # print(recs_cout)
 
     sorted = sort_dict(recs_cout, threshold)
-    plot_bars(sorted, 1)
+    plot_bars(sorted, str(1))
 
 
 def get_rel_res(records, threshold):
     recs = [
-        ' -> '.join([
+        '-'.join([
             node['name']
             for node in list(dict.fromkeys([
                 node
-                for r in record['p']
+                for r in record['p0']
                 for node in r.nodes
         ]))])
         for record in records
@@ -94,29 +140,36 @@ def get_rel_res(records, threshold):
         nodes: recs.count(nodes)
         for nodes in recs
     }
-    print(recs_cout)
-
     return sort_dict(recs_cout, threshold)
 
 
-def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=100):
+def get_rel_res2(records, threshold, rels=['p0']):
+    recs = [
+        ' \n '.join([
+            '-'.join([
+                node['name']
+                for node in list(dict.fromkeys([
+                    node
+                    for r in record[rel]
+                    for node in r.nodes
+            ]))])
+            for rel in rels
+        ])
+        for record in records
+    ]
+    
+    subgraph_count = {
+        subgraph: recs.count(subgraph)
+        for subgraph in recs
+    }
+
+    return sort_dict(subgraph_count, threshold)
+
+
+def plot_duplicated_chains(client, length, ignore=['phi'], threshold=10):
     if type(length) == int and length > 0:
-        query = 'MATCH p=(n0)'
-        for i in range(1, length):
-            query += f'-[r{i}:DFG]->(n{i})'
-
-        if len(ignore) > 0:
-            query += ' WHERE ('
-            for name in ignore:
-                for i in range(0, length):
-                    query += f'(NOT n{i}.name = \'{name}\') AND '
-
-            query += 'true)'
-
-        query += ' RETURN p;'
+        query = query_builder(length, width=1, ignore=ignore)
         
-        # Count the number of nodes in the database
-        print('INFO', length, 'query:', query)
         records, summary, keys = client.execute_query(
             query
         )
@@ -126,24 +179,9 @@ def plot_duplicated_chains(client, length, ignore=['Const', 'phi'], threshold=10
         plot_bars(sorted, length)
 
 
-def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['Const', 'phi'], threshold=100):
+def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['phi'], threshold=10):
     if type(length) == int and length > 1:
-        query = 'MATCH p=(n0)'
-        for i in range(1, length):
-            query += f'-[r{i}:DFG]->(n{i})'
-
-
-        query += ' WHERE ('
-
-        if len(ignore) > 0:
-            for name in ignore:
-                for i in range(0, length):
-                    query += f'(NOT n{i}.name = \'{name}\') AND '
-
-        query += f'n0.name = \'{first}\' AND n{length - 1}.name = \'{last}\') RETURN p;'
-        
-        # Count the number of nodes in the database
-        print(f'INFO {first} -> {length - 1}*X -> {last} query: {query}')
+        query = query_builder(length, width=1, special_cond=f'n00.name = \'{first}\' AND n0{length - 1}.name = \'{last}\'', ignore=ignore)
         records, summary, keys = client.execute_query(
             query
         )
@@ -153,17 +191,27 @@ def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['Cons
         plot_bars(sorted, first + '_' + str(length - 1) + 'xX_' + last)
 
 
-def plot_vec_insts(client):
-    '''ToDo: Match for (load) -> ...[some arithmetic insts]... -> (store)'''
-    'ToDo: get vec length'
-    'ToDo: get arithmetic chain'
-    pass
+def plot_paralell_chains_fixed_start(client, length, width, ignore=['phi'], threshold=10):
+    assert width >= 2
+    query = query_builder(length, width=width, special_cond='', ignore=ignore, fixed_start=True)
+    print(query)
+    records, summary, keys = client.execute_query(
+        query
+    )
+
+    # Get the result
+    sorted = get_rel_res2(
+        records, 
+        threshold, 
+        [f'p{i}' for i in range(width)]
+    )
+    plot_bars(sorted, 'Paralell_' + str(length) + '_X_' + str(width))
 
 
 def print_num_nodes(client):
     # Count the number of nodes in the database
     records, summary, keys = client.execute_query(
-        'MATCH (n) RETURN count(n) AS num_of_nodes;'
+        'MATCH (n) WHERE n.name != \'Const\' AND n.name != \'phi\' RETURN count(n) AS num_of_nodes;'
     )
 
     # Get the result
@@ -175,29 +223,31 @@ def main(args):
     uri = 'bolt://' + args.host + ':' + str(args.port)
     auth = ('', '')
     plot_dup_chains = args.pdc
+    plot_dup_chains = True
 
     with GraphDatabase.driver(uri, auth=auth) as client:
         client.verify_connectivity()
         if args.clear_db:
             clear_db(client)
         else:
-            print_num_nodes(client)
+            if debug:
+                print_num_nodes(client)
+            plot_nodes(client, 16)
 
-            plot_nodes(client, 500)
+            ignore = ['Const', 'phi']
 
-            ignore = ['Const']
-            plot_chains_with_fiexed_start_end(client, 2, 'load', 'store', ignore, 50)
-            plot_chains_with_fiexed_start_end(client, 3, 'load', 'store', ignore, 50)
-            plot_chains_with_fiexed_start_end(client, 4, 'load', 'store', ignore, 50)
+            for length in range(2, 5):
+                plot_chains_with_fiexed_start_end(client, length, 'load', 'store', ignore, 10)
+                plot_chains_with_fiexed_start_end(client, length, 'xor', 'store', ignore, 10)
+                plot_chains_with_fiexed_start_end(client, length, 'add', 'store', ignore, 10)
+
+            for length in range(2, 5):
+                for width in range(2, 4):
+                    plot_paralell_chains_fixed_start(client, length, width, ignore, threshold=5)
 
             if plot_dup_chains:
-                plot_duplicated_chains(client, 2, ignore, 500)
-                plot_duplicated_chains(client, 3, ignore, 300)
-                plot_duplicated_chains(client, 4, ignore, 250)
-                plot_duplicated_chains(client, 5, ignore, 250)
-                plot_duplicated_chains(client, 6, ignore, 250)
-                plot_duplicated_chains(client, 7, ignore, 250)
-                plot_duplicated_chains(client, 8, ignore, 250)
+                for length in range(2, 9):
+                    plot_duplicated_chains(client, length, ignore, 8)
         
 
 if __name__ == '__main__':
