@@ -23,7 +23,7 @@ def sort_dict(result, threshold=0):
 
 def plot_bars(stats, name):
     # set width of bars
-    name = str(name) + '_DFG'
+    name = str(name)
 
     bar_width = 0.20
 
@@ -32,10 +32,28 @@ def plot_bars(stats, name):
     plt.grid(visible = True, axis = 'y', which='minor', color='#999999', linestyle='-', alpha=0.2)
     plt.rc('axes', unicode_minus=False)
 
-    chains = [
+    _chains = [
         str(pair[0])
         for pair in stats
     ]
+    chains = []
+    for chain in _chains:
+        label = ''
+        first = True
+        for line in chain.split('\n'):
+            if first:
+                label += line
+            else: 
+                label += '\n'
+                nodes = line.split('-')
+                label += ' '*(len(nodes[0])-2) 
+                label += '\\-'
+                label += '-'.join(nodes[1:])
+            first = False
+            
+        chains += [label]
+    assert len(chains) == len(_chains)
+
     counts = [
         pair[1]
         for pair in stats
@@ -56,7 +74,7 @@ def plot_bars(stats, name):
 
     plt.tight_layout()
 
-    plt.savefig('./out/' + name + '_most_chains.pdf')
+    plt.savefig('./out/_DFG_' + name + '_most_chains.pdf')
     plt.close()
 
 def query_builder(length=1, width=1, special_cond='true', ignore=['Const', 'phi'], fixed_start=True):
@@ -88,13 +106,18 @@ def query_builder2(length=[1], width=1, special_cond='true', ignore=['Const', 'p
             start = 0
             if fixed_start: 
                 start = 1
-                query += f'(NOT n00.name = \'{name}\') AND '
-            for i in range(start, width):
+                query += f'n00.name != \'{name}\' AND '
+            for i in range(0, width):
                 for j in range(start, length[i]):
-                    query += f'(NOT n{i}{j}.name = \'{name}\') AND '
+                    query += f'n{i}{j}.name != \'{name}\' AND '
+    for i in range(1, width):
+        for j in range(1, length[i]):
+            if j - 1 in range(1, length[i-1]):
+                query += f'n{i-1}{j} != n{i}{j} AND '
+        query += f'p{i-1} != p{i} AND'
     if special_cond == '':
         special_cond = 'true'
-    query += special_cond + ') RETURN p0'
+    query += '(' + special_cond + ')) RETURN p0'
     
     for i in range(1, width):
         query += f', p{i}'
@@ -119,7 +142,6 @@ def plot_nodes(client, threshold=10):
         nodes: recs.count(nodes)
         for nodes in recs
     }
-    # print(recs_cout)
 
     sorted = sort_dict(recs_cout, threshold)
     plot_bars(sorted, str(1))
@@ -145,14 +167,15 @@ def get_rel_res(records, threshold):
 
 def get_rel_res2(records, threshold, rels=['p0']):
     recs = [
-        ' \n '.join([
+        '\n'.join([
             '-'.join([
                 node['name']
                 for node in list(dict.fromkeys([
                     node
                     for r in record[rel]
                     for node in r.nodes
-            ]))])
+                ]))
+            ])
             for rel in rels
         ])
         for record in records
@@ -194,7 +217,7 @@ def plot_chains_with_fiexed_start_end(client, length, first, last, ignore=['phi'
 def plot_paralell_chains_fixed_start(client, length, width, ignore=['phi'], threshold=10):
     assert width >= 2
     query = query_builder(length, width=width, special_cond='', ignore=ignore, fixed_start=True)
-    print(query)
+
     records, summary, keys = client.execute_query(
         query
     )
@@ -242,7 +265,7 @@ def main(args):
                 plot_chains_with_fiexed_start_end(client, length, 'add', 'store', ignore, 10)
 
             for length in range(2, 5):
-                for width in range(2, 4):
+                for width in range(2, 3):
                     plot_paralell_chains_fixed_start(client, length, width, ignore, threshold=5)
 
             if plot_dup_chains:
