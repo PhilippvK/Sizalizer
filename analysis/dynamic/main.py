@@ -78,6 +78,7 @@ class SearchKey(Enum):
     PAIR = 'pair'
     IMM = 'imm'
 
+
 def parse_line(source_line):
     # use WordEnd to avoid parsing leading a-f of non-hex numbers as a hex
     if source_line[0:2] == '0x':
@@ -112,6 +113,7 @@ def parse_line(source_line):
         print('No Inst:', source_line)
     return None
 
+
 def parse_file(fqfn):
     instructions = []
     with open(fqfn, 'r', errors='replace') as file:
@@ -130,12 +132,25 @@ def parse_file(fqfn):
             print(str(inst))
     return instructions    
 
+
+def most_addr(instructions, threshold=10000): 
+    result = {}
+    for inst in instructions:
+        key = inst.address
+        if key in result:
+            result[key] += 1
+        else:
+            result[key] = 1
+    return sort_dict(result, threshold)
+
+
 def sort_dict(result, threshold):
     vals = [
         val 
         for val in result.items()
     ]
     return sorted(vals, key=lambda x:x[1], reverse=True)[:threshold]
+
 
 def most_inst(instructions, mode=Mode.ALL, search_key=SearchKey.MNEMONIC, threshold=10): 
     result = {}
@@ -218,6 +233,16 @@ def get_improvement(stats, imp_map):
         imp += imp_map(stat[1])
     return imp
 
+
+def get_inst_rate(addrs, inst_count, bound):
+    sum = 0
+    count_inst = 0
+    while (sum/inst_count)*100 < bound:
+        sum += addrs[count_inst][1]
+        count_inst += 1
+    return count_inst
+
+
 def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
     # set width of bars
     name = filename.split('.')[0]
@@ -253,13 +278,13 @@ def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
 
     plt.tight_layout()
 
-    plt.savefig('./out/' + name + '_most_' + search_key.value + '_' + mode.value + '.pdf')
+    plt.savefig('./out/' + name + '_Dynamic_most_' + search_key.value + '_' + mode.value + '.pdf')
     plt.close()
 
 
 def get_byte_count(instructions):
     result = 0
-    for inst in instructions[1:]:
+    for inst in instructions:
         result += inst.get_size()
     return result
 
@@ -297,9 +322,21 @@ def main(args):
         # x contains count of 32 Bit (4 Byte) instructions
         # x*2 is the count of Bytes saved by a reduction to 16 bit inst
         improvement = get_improvement(stats, lambda x: x*2)
-        total_byte_count = get_byte_count(instructions)
-        print(file, 'contains', len(instructions), 'with', total_byte_count, 'bytes')
-        print('  Improvement by replacing all 32 Bit inst with 16 Bit inst: ' + str(improvement) + ' Byte  ==', round((1 - ((total_byte_count - improvement)/total_byte_count))*100), '%')
+        inst_count = len(instructions)
+        byte_count = get_byte_count(instructions)
+        print(file, 'contains', len(instructions), 'with', byte_count, 'bytes')
+        print('  Improvement by replacing all 32 Bit inst with 16 Bit inst: ' + str(improvement) + ' Byte  ==', round((1 - ((byte_count - improvement)/byte_count))*100), '%')
+
+        addrs = most_addr(instructions, 10000000)
+        
+        bound = 99
+        inst_count_80p = get_inst_rate(addrs, inst_count, bound)
+        print('  ', bound, '% time spend in ', inst_count_80p, ' instructions, equate to ', (inst_count_80p/inst_count)*100, '%')
+        bound = 90
+        while (inst_count_80p/inst_count)*100 > 50:
+            inst_count_80p = get_inst_rate(addrs, inst_count, bound)
+            print('  ', bound, '% time spend in ', inst_count_80p, ' instructions, equate to ', (inst_count_80p/inst_count)*100, '%')
+            bound -= 10
 
         if debug:
             pairs = most_pairs(instructions, 10, equal=True)
@@ -317,16 +354,16 @@ def main(args):
 
     for mode in Mode:
         stats = most_inst(total, mode, SearchKey.MNEMONIC, 10)
-        plot_bars(stats, 'Total', mode)
+        plot_bars(stats, '_Total', mode)
 
     stats = most_inst(total, Mode.ALL, SearchKey.OPCODE, 10)
-    plot_bars(stats, 'Total', Mode.ALL, SearchKey.OPCODE)
+    plot_bars(stats, '_Total', Mode.ALL, SearchKey.OPCODE)
 
     stats = most_inst(total, Mode.ALL, SearchKey.REGISTER, 10)
-    plot_bars(stats, 'Total', Mode.ALL, SearchKey.REGISTER)
+    plot_bars(stats, '_Total', Mode.ALL, SearchKey.REGISTER)
     
     chains = longest_chains(total, 10)
-    plot_bars(chains, 'Total', Mode.ALL, SearchKey.CHAIN)
+    plot_bars(chains, '_Total', Mode.ALL, SearchKey.CHAIN)
 
     addi_dist = inst_vals(total, 'addi', 10)
     plot_bars(addi_dist, 'Total_ADDI', Mode.FULL, SearchKey.IMM)
@@ -339,8 +376,14 @@ def main(args):
     # x*2 is the count of Bytes saved by a reduction to 16 bit inst
     improvement = get_improvement(stats, lambda x: x*2)
     total_byte_count = get_byte_count(total)
+    total_inst_count = len(total)
     print('Total contains', len(total), 'with', total_byte_count, 'bytes')
     print('  Improvement by replacing all 32 Bit inst with 16 Bit inst: ' + str(improvement) + ' Byte  ==', round((1 - ((total_byte_count - improvement)/total_byte_count))*100), '%')
+
+    addrs = most_addr(total, 10000000)
+    bound = 99
+    inst_count_80p = get_inst_rate(addrs, total_inst_count, bound)
+    print('  Total ', bound, ' % time spend in ', inst_count_80p, ' instructions, equate to ', (inst_count_80p/total_inst_count)*100, '%')
 
     if debug:
         pairs = most_pairs(total, 10, equal=True)
@@ -354,15 +397,13 @@ def main(args):
         print()
 
     pairs = most_pairs(total, 10, equal=False, connected=True)
-    plot_bars(pairs, 'Total', Mode.ALL, SearchKey.PAIR)
-
-
+    plot_bars(pairs, '_Total', Mode.ALL, SearchKey.PAIR)
 
     pairs = most_pairs(instructions, 10, equal=False, connected=True)
     # x contains count of 16 or 32 Bit instructions pairs
     # x*6 is the count of Bytes saved by a reduction to 16 bit inst
     improvement = get_improvement(pairs, lambda x: x*6)
-    print('Max. improvement by replacing all 16 or 32 Bit instructions pairs with 16 Bit inst: ' + str(improvement) + ' Byte')
+    # print('Max. improvement by replacing all 16 or 32 Bit instructions pairs with 16 Bit inst: ' + str(improvement) + ' Byte')
 
 
 if __name__ == '__main__':
