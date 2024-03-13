@@ -48,15 +48,17 @@ class Instruction:
         return self.regs[1:]
     
     def get_imm(self):
-        for reg in self.regs:
-            vals = reg.split('=')
-            vlen = len(vals)
-            if vlen != 2:
-                print('ERROR false vals len:', reg)
-                print(str(self))
-            assert(vlen == 2)
-            if 'imm' == vals[0]:
-                return int(vals[1])
+        reg = self.regs[-1]
+        vals = reg.split('=')
+        vlen = len(vals)
+        if vlen != 2:
+            print('ERROR false vals len:', reg)
+            print(str(self))
+        assert(vlen == 2)
+        if 'imm' == vals[0]:
+            return int(vals[1])
+        else:
+            print('ERROR not an imm for inst:', str(self))
 
     def get_dest(self):
         if self.mnemonic in no_dest or len(self.regs) < 1:
@@ -212,10 +214,10 @@ def most_pairs(instructions, threshold=5, equal=True, connected=False):
     return sort_dict(result, threshold)
 
 
-def inst_vals(instructions, inst, treshold=5):
+def inst_vals(instructions, menomic, treshold=5):
     result = {}
     for inst in instructions:
-        if inst.mnemonic == inst:
+        if inst.mnemonic == menomic:
             key = inst.get_imm()
             if key != None:
                 if key in result:
@@ -278,7 +280,7 @@ def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
 
     plt.tight_layout()
 
-    plt.savefig('./out/' + name + '_Dynamic_most_' + search_key.value + '_' + mode.value + '.pdf')
+    plt.savefig('./out/' + name + '_Dynamic_' + search_key.value + '_' + mode.value + '.pdf')
     plt.close()
 
 
@@ -316,7 +318,10 @@ def main(args):
         plot_bars(chains, str(file), Mode.ALL, SearchKey.CHAIN)
 
         addi_dist = inst_vals(instructions, 'addi', 10)
-        plot_bars(addi_dist, str(file), Mode.FULL, SearchKey.IMM)
+        plot_bars(addi_dist, str(file).replace('.txt', '_ADDI'), Mode.FULL, SearchKey.IMM)
+
+        lw_dist = inst_vals(total, 'lw', 10)
+        plot_bars(lw_dist, str(file).replace('.txt', '_LW'), Mode.FULL, SearchKey.IMM)
 
         stats = most_inst(instructions, Mode.FULL, SearchKey.MNEMONIC, 10000000)
         # x contains count of 32 Bit (4 Byte) instructions
@@ -366,10 +371,10 @@ def main(args):
     plot_bars(chains, '_Total', Mode.ALL, SearchKey.CHAIN)
 
     addi_dist = inst_vals(total, 'addi', 10)
-    plot_bars(addi_dist, 'Total_ADDI', Mode.FULL, SearchKey.IMM)
+    plot_bars(addi_dist, '_Total_ADDI', Mode.FULL, SearchKey.IMM)
 
-    addi_dist = inst_vals(total, 'lw', 10)
-    plot_bars(addi_dist, 'Total_LW', Mode.FULL, SearchKey.IMM)
+    lw_dist = inst_vals(total, 'lw', 10)
+    plot_bars(lw_dist, '_Total_LW', Mode.FULL, SearchKey.IMM)
 
     stats = most_inst(total, Mode.FULL, SearchKey.MNEMONIC, 10000000000)
     # x contains count of 32 Bit (4 Byte) instructions

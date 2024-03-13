@@ -74,7 +74,7 @@ def plot_bars(stats, name):
 
     plt.tight_layout()
 
-    plt.savefig('./out/_DFG_' + name + '_most_chains.pdf')
+    plt.savefig('./out/_DFG_' + name + '.pdf')
     plt.close()
 
 def query_builder(length=1, width=1, special_cond='true', ignore=['Const', 'phi'], fixed_start=True):
