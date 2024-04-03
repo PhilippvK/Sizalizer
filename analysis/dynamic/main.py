@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from enum import Enum
+import tikzplotlib
 
 plt.rcParams["font.family"] = "cmb10"
 
@@ -205,7 +206,7 @@ def most_pairs(instructions, threshold=5, equal=True, connected=False):
         if is_equal and is_connected:
             key = old_mn
             if not equal:
-                key = old_mn + '_' + new_mn
+                key = old_mn + '-' + new_mn
             if key in result:
                 result[key] += 1
             else:
@@ -269,9 +270,9 @@ def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
     bars_x = np.arange(len(bars_y))
     plt.bar(bars_x, bars_y, width=bar_width, edgecolor='white', label=mnemonics, log=False)
 
-    plt.title(name)
+    # plt.title(name)
     ylabel = search_key.value + ' Count ' +  mode.value + ' Inst.'
-    plt.ylabel(ylabel)
+    # plt.ylabel(ylabel)
     plt.xticks([r for r in range(len(mnemonics))], mnemonics)
     for index, label in enumerate(plt.gca().xaxis.get_ticklabels()):
         y_position = label.get_position()[1]  # Get current y position
@@ -279,8 +280,11 @@ def plot_bars(stats, filename, mode=Mode.ALL, search_key=SearchKey.MNEMONIC):
             label.set_y(y_position - 0.06)  # Move down by a fraction; adjust as needed
 
     plt.tight_layout()
+    plt.legend().remove()
 
-    plt.savefig('./out/' + name + '_Dynamic_' + search_key.value + '_' + mode.value + '.pdf')
+    fig_name = './out/' + name + '_Dynamic_' + search_key.value + '_' + mode.value
+    plt.savefig(fig_name + '.pdf')
+    tikzplotlib.save(fig_name + '.tex')
     plt.close()
 
 

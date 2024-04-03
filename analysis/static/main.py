@@ -2,6 +2,7 @@ import argparse
 from neo4j import GraphDatabase
 import numpy as np
 import matplotlib.pyplot as plt
+import tikzplotlib
 
 plt.rcParams["font.family"] = "cmb10"
 debug = False
@@ -63,18 +64,21 @@ def plot_bars(stats, name):
     bars_x = np.arange(len(bars_y))
     plt.bar(bars_x, bars_y, width=bar_width, edgecolor='white', label=chains, log=False)
 
-    plt.title(name)
+    # plt.title(name)
     ylabel = 'Count Inst.'
-    plt.ylabel(ylabel)
+    # plt.ylabel(ylabel)
     plt.xticks([r for r in range(len(chains))], chains)
     for index, label in enumerate(plt.gca().xaxis.get_ticklabels()):
         y_position = label.get_position()[1]  # Get current y position
         if index % 2 != 0:  # For odd indices
             label.set_y(y_position - 0.06)  # Move down by a fraction; adjust as needed
 
+    plt.legend().remove()
     plt.tight_layout()
 
-    plt.savefig('./out/_DFG_' + name + '.pdf')
+    fig_name = './out/_DFG_' + name
+    plt.savefig(fig_name + '.pdf')
+    tikzplotlib.save(fig_name + '.tex')
     plt.close()
 
 def query_builder(length=1, width=1, special_cond='true', ignore=['Const', 'phi'], fixed_start=True):

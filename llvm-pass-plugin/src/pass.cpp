@@ -112,21 +112,19 @@ namespace
         {
             // MERGE: create if not exist else match
             string store_first = "MERGE (first_bb {name: '" + get_bb_name(first_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string set_frist_code = " SET first_bb.code =  '" + llvm_to_string(first_bb) + "'";
+            string set_frist_code = " SET first_bb.code =  '" + sanitize_str(llvm_to_string(first_bb)) + "'";
             string store_second = " MERGE (second_bb {name: '" + get_bb_name(second_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string set_second_code = " SET second_bb.code =  '" + llvm_to_string(second_bb) + "'";
+            string set_second_code = " SET second_bb.code =  '" + sanitize_str(llvm_to_string(second_bb)) + "'";
             string rel = " MERGE (first_bb)-[:CFG]->(second_bb);";
             string qry = store_first + set_frist_code + store_second + set_second_code + rel;
             exec_qeury(session, qry.c_str());
         }
 
         string sanitize_str(string str) {
-            replace(str.begin(), str.end(), '\n', '_');
-            replace(str.begin(), str.end(), '\"', '_');
-            replace(str.begin(), str.end(), '\\', '_');
-            replace(str.begin(), str.end(), '\'', '_');
-            replace(str.begin(), str.end(), '(', '_');
-            replace(str.begin(), str.end(), ')', '_');
+            const string illegal_chars = "\n\"\\\'\t()[]{}~";
+            for (char c : illegal_chars) { 
+                replace(str.begin(), str.end(), c, '_');
+            }
             return str;
         }
 
