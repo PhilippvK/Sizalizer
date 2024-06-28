@@ -108,25 +108,108 @@ namespace
             }
         }
 
+        void create_mod(mg_session *session, string module_name)
+        {
+            string store_mod = "MERGE (mod {name: '" + module_name + "', kind: 'module'})";
+            string qry = store_mod;
+            exec_qeury(session, qry.c_str());
+        }
+
+        void create_func(mg_session *session, string f_name, string module_name)
+        {
+            string store_func = "MERGE (func {name: '" + f_name + "', module_name: '" + module_name + "', kind: 'function'})";
+            string qry = store_func;
+            exec_qeury(session, qry.c_str());
+        }
+
+        void connect_mod_func(mg_session *session, string f_name, string module_name)
+        {
+            string match_mod = "MATCH (mod {name: '" + module_name + "', kind: 'module'})";
+            string match_func = "MATCH (func {name: '" + f_name + "', module_name: '" + module_name + "', kind: 'function'})";
+            string rel = " MERGE (mod)-[:MOD]->(func);";
+            string qry = match_mod + match_func + rel;
+            exec_qeury(session, qry.c_str());
+        }
+
+        void create_bb(mg_session *session, BasicBlock *bb, string f_name, string module_name)
+        {
+            string store_bb = "MERGE (bb {name: '" + get_bb_name(bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'basicblock'})";
+            string set_bb_code = " SET bb.code =  '" + sanitize_str(llvm_to_string(bb)) + "'";
+            string qry = store_bb + set_bb_code;
+            exec_qeury(session, qry.c_str());
+        }
+
         void connect_bbs(mg_session *session, BasicBlock *first_bb, BasicBlock *second_bb, string f_name, string module_name)
         {
             // MERGE: create if not exist else match
-            string store_first = "MERGE (first_bb {name: '" + get_bb_name(first_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string set_frist_code = " SET first_bb.code =  '" + sanitize_str(llvm_to_string(first_bb)) + "'";
-            string store_second = " MERGE (second_bb {name: '" + get_bb_name(second_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string set_second_code = " SET second_bb.code =  '" + sanitize_str(llvm_to_string(second_bb)) + "'";
+            string match_first = "MATCH (first_bb {name: '" + get_bb_name(first_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'basicblock'})";
+            string match_second = "MATCH (second_bb {name: '" + get_bb_name(second_bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'basicblock'})";
             string rel = " MERGE (first_bb)-[:CFG]->(second_bb);";
-            string qry = store_first + set_frist_code + store_second + set_second_code + rel;
+            string qry = match_first + match_second + rel;
+            exec_qeury(session, qry.c_str());
+        }
+
+        void connect_func_bb(mg_session *session, BasicBlock *bb, string f_name, string module_name)
+        {
+            // MERGE: create if not exist else match
+            string match_bb = "MATCH (bb {name: '" + get_bb_name(bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'basicblock'})";
+            string match_func = "MATCH (func {name: '" + f_name + "', module_name: '" + module_name + "', kind: 'function'})";
+            string rel = " MERGE (func)-[:FUNC]->(bb);";
+            string qry = match_bb + match_func + rel;
             exec_qeury(session, qry.c_str());
         }
 
         string sanitize_str(string str) {
             const string illegal_chars = "\n\"\\\'\t()[]{}~";
-            for (char c : illegal_chars) { 
+            for (char c : illegal_chars) {
                 replace(str.begin(), str.end(), c, '_');
             }
             return str;
         }
+
+        void create_inst(mg_session *session, string code, string op_name, string f_name, string module_name)
+        {
+            code = sanitize_str(code);
+
+            string store_inst = "MERGE (inst {name: '" + op_name + "', inst: '" + code + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'instruction'})";
+            string qry = store_inst + '\n';
+            exec_qeury(session, qry.c_str());
+        }
+
+        void create_label(mg_session *session, string code, string label_name, string f_name, string module_name)
+        {
+            // MERGE: create if not exist else match
+            code = sanitize_str(code);
+
+            string store_inst = "MERGE (label {name: '" + label_name + "', code: '" + code + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'label'})";
+            string qry = store_inst + '\n';
+            exec_qeury(session, qry.c_str());
+        }
+
+        void connect_label_inst(mg_session *session, string label_code, string label_name, string code, string op_name, string f_name, string module_name)
+        {
+            label_code = sanitize_str(label_code);
+            code = sanitize_str(code);
+
+            string match_label = "MATCH (label {name: '" + label_name + "', code: '" + label_code + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'label'})";
+            string match_inst = "MATCH (inst {name: '" + op_name + "', inst: '" + code + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'instruction'})";
+            string rel = "MERGE (label)-[:LABEL]->(inst);";
+            string qry = match_label + '\n' + match_inst + '\n' + rel + '\n';
+            exec_qeury(session, qry.c_str());
+        }
+
+        void connect_bb_inst(mg_session *session, BasicBlock *bb, string code, string op_name, string f_name, string module_name)
+        {
+            // MERGE: create if not exist else match
+            code = sanitize_str(code);
+
+            string match_bb = "MATCH (bb {name: '" + get_bb_name(bb) + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'basicblock'})";
+            string match_inst = "MATCH (inst {name: '" + op_name + "', inst: '" + code + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'instruction'})";
+            string rel = "MERGE (bb)-[:ENTRY]->(inst);";
+            string qry = match_bb + '\n' + match_inst + '\n' + rel + '\n';
+            exec_qeury(session, qry.c_str());
+        }
+
 
         void connect_insts(mg_session *session, string src_str, string src_op_name, string dst_str, string dst_op_name, string f_name, string module_name)
         {
@@ -134,10 +217,23 @@ namespace
             src_str = sanitize_str(src_str);
             dst_str = sanitize_str(dst_str);
 
-            string store_src = "MERGE (src_inst {name: '" + src_op_name + "', inst: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
-            string store_dst = "MERGE (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string match_src = "MATCH (src_inst {name: '" + src_op_name + "', inst: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'instruction'})";
+            string match_dst = "MATCH (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "', kind: 'instruction'})";
             string rel = "MERGE (src_inst)-[:DFG]->(dst_inst);";
-            string qry = store_src + '\n' + store_dst + '\n' + rel + '\n';
+            string qry = match_src + '\n' + match_dst + '\n' + rel + '\n';
+            exec_qeury(session, qry.c_str());
+        }
+
+        void connect_inst_inst_chain(mg_session *session, string src_str, string src_op_name, string dst_str, string dst_op_name, string f_name, string module_name)
+        {
+            // MERGE: create if not exist else match
+            src_str = sanitize_str(src_str);
+            dst_str = sanitize_str(dst_str);
+
+            string match_src = "MATCH (src_inst {name: '" + src_op_name + "', inst: '" + src_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string match_dst = "MATCH (dst_inst {name: '" + dst_op_name + "', inst: '" + dst_str + "', func_name: '" + f_name + "', module_name: '" + module_name + "'})";
+            string rel = "MERGE (src_inst)-[:CHAIN]->(dst_inst);";
+            string qry = match_src + '\n' + match_dst + '\n' + rel + '\n';
             exec_qeury(session, qry.c_str());
         }
 
@@ -156,26 +252,34 @@ namespace
 
             // Push CDFG to DB
             string module_name = M.getName().str();
+            create_mod(session, module_name);
 #if PRINT_IR
             outs() << "Module Name: " << module_name << "\n";
 #endif
             for (Function &F : M)
             {
                 string f_name = F.getName().str();
+                create_func(session, f_name, module_name);
+                connect_mod_func(session, f_name, module_name);
 #if PRINT_IR
                 outs() << " Function: " << f_name << "\n";
 #endif
                 for (BasicBlock &bb : F)
                 {
                     string bb_name = get_bb_name(&bb);
+                    create_bb(session, &bb, f_name, module_name);
+                    connect_func_bb(session, &bb, f_name, module_name);
 #if PRINT_IR
                     outs() << "  Label: " << bb_name << "\n";
 #endif
                     for (BasicBlock *suc_bb : successors(&bb))
                     {
+                        create_bb(session, suc_bb, f_name, module_name);
                         connect_bbs(session, &bb, suc_bb, f_name, module_name);
                     }
 
+                    bool entry = true;
+                    Instruction* prev = NULL;
                     for (Instruction &inst : bb)
                     {
                         string inst_str = llvm_to_string(&inst);
@@ -183,10 +287,22 @@ namespace
 #if PRINT_IR
                         outs() << "   " << inst_str;
 #endif
+                        create_inst(session, inst_str, op_name, f_name, module_name);
+                        if (entry) {
+                            connect_bb_inst(session, &bb, inst_str, op_name, f_name, module_name);
+                            entry = false;
+                        } else {
+                            string src_str = llvm_to_string(prev);
+                            string src_op_name = prev->getOpcodeName();
+                            connect_inst_inst_chain(session, src_str, src_op_name, inst_str, op_name, f_name, module_name);
+                        }
+                        prev = &inst;
 
                         Instruction::op_iterator opEnd = inst.op_end();
                         for (Instruction::op_iterator opi = inst.op_begin(); opi != opEnd; opi++)
                         {
+                            // TODO: create_op
+                            // TODO: connect_op_inst
 
                             Value *op = opi->get();
                             Type *tp = op->getType();
@@ -194,17 +310,26 @@ namespace
                             {
                                 string src_str = llvm_to_string(op);
                                 string src_op_name = "Const";
-                                
+
                                 Instruction *src_inst = dyn_cast<Instruction>(op);
                                 if (src_inst) {
+                                    // TODO: connect_inst_op
                                     src_op_name = src_inst->getOpcodeName();
+                                } else { // Const
+
                                 }
 #if DEBUG
                                 outs() << "    - " << src_str;
 #endif
                                 connect_insts(session, src_str, src_op_name, inst_str, op_name, f_name, module_name);
+                            } else {
+                                string code = llvm_to_string(op);
+                                string label_name = "?Label?";
+                                create_label(session, code, label_name, f_name, module_name);
+                                connect_label_inst(session, code, label_name, inst_str, op_name, f_name, module_name);
                             }
                         }
+                        // connect_bb_inst(session, &bb, &inst, f_name, module_name);
                     }
                 }
             }
