@@ -7,12 +7,13 @@ add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
-INCLUDE_DIRECTORIES(/opt/riscv/lib/riscv32-unknown-linux-gnu)
+INCLUDE_DIRECTORIES(/opt/riscv/lib/riscv32-unknown-linux-gnu /work/git/sizalizer/mgclient/include/ /work/git/sizalizer/mgclient/build/src/)
 LINK_DIRECTORIES(/opt/riscv/include)
 add_library(LLVMCDFG MODULE
     src/pass.cpp
 )
 
 TARGET_LINK_LIBRARIES(LLVMCDFG /usr/local/lib/libmgclient.so)
+target_compile_features(LLVMCDFG PUBLIC cxx_std_17)
 
 SET(CMAKE_CXX_FLAGS "-Wall")

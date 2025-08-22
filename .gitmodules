@@ -1,6 +1,8 @@
 [submodule "llvm-project"]
 	path = llvm-project
-	url = git@gitlab.lrz.de:aemy/administration/projects/scale4edge/llvm-project.git
+	# url = git@gitlab.lrz.de:aemy/administration/projects/scale4edge/llvm-project.git
+	url = https://github.com/llvm/llvm-project.git
 [submodule "embench-iot"]
 	path = embench-iot
-	url = git@gitlab.lrz.de:aemy/administration/projects/scale4edge/embench-iot.git
+	# url = git@gitlab.lrz.de:aemy/administration/projects/scale4edge/embench-iot.git
+	url = https://github.com/embench/embench-iot.git

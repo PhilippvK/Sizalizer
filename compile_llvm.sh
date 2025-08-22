@@ -18,7 +18,7 @@ cmake -G Ninja \
 	-DLLVM_PARALLEL_COMPILE_JOBS=4								\
 	-DLLVM_RAM_PER_COMPILE_JOB=5000 							\
 	-DLLVM_RAM_PER_LINK_JOB=15000								\
-	-DCMAKE_BUILD_TYPE=MinRelSize   							\
+	-DCMAKE_BUILD_TYPE=MinSizeRel   							\
 	-DCMAKE_INSTALL_PREFIX="/lrv5"								\
 	-DDEFAULT_SYSROOT="/opt/riscv/sysroot" 						\
 	-DGCC_INSTALL_PREFIX="/opt/riscv" 							\

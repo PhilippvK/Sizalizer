@@ -11,10 +11,13 @@
 using namespace llvm;
 using namespace std;
 
-#define DEBUG false
+// #define DEBUG false
+#define DEBUG true
 
 #define PRINT_IR false
+// #define PRINT_IR true
 #define PURGE_DB false
+// #define PURGE_DB true
 
 namespace
 {
@@ -75,6 +78,9 @@ namespace
 
         void exec_qeury(mg_session *session, const char *query)
         {
+#if DEBUG
+            printf("QUERY> %s\n", query);
+#endif
             if (mg_session_run(session, query, NULL, NULL, NULL, NULL) < 0)
             {
                 outs() << "failed to execute query: " << query << " mg error: " << mg_session_error(session) << "\n";
@@ -243,16 +249,20 @@ namespace
             outs() << "Running CDFGPass\n";
 #endif
             mg_session *session = connect_to_db("localhost", 7687);
+            // mg_session *session = connect_to_db("gpu5", 7687);
 
 #if PURGE_DB
             // Clear database
             auto del = "MATCH (n) DETACH DELETE n;";
             exec_qeury(session, del);
 #endif
+            // TODO: create_session (datetime + name)
+            // TODO: connect session with all nodes or use attributes?
 
             // Push CDFG to DB
             string module_name = M.getName().str();
             create_mod(session, module_name);
+            // TODO: connect_session_mod
 #if PRINT_IR
             outs() << "Module Name: " << module_name << "\n";
 #endif
